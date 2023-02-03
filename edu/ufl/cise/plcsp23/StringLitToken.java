@@ -14,7 +14,7 @@ public class StringLitToken implements IStringLitToken {
 
     @Override
     public Kind getKind() {
-        return null;
+        return STRING_LIT;
     }
 
     @Override
