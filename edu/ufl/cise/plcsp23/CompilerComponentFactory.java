@@ -13,8 +13,7 @@ package edu.ufl.cise.plcsp23;
 public class CompilerComponentFactory {
 	public static IScanner makeScanner(String input) {
 		//Add statement to return an instance of your scanner
-		IScanner scanner = makeScanner("h");
-		return scanner;
+		return new Scanner(input);
 	}
 
 }

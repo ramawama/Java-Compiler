@@ -1,6 +1,18 @@
 package edu.ufl.cise.plcsp23;
 
 public class Token implements IToken {
+    final Kind kind;
+    final int pos;
+    final int length;
+    final char[] source;
+
+    public Token(Kind kind, int pos, int length, char[] source){
+        super();
+        this.kind = kind;
+        this.pos = pos;
+        this.length = length;
+        this.source = source;
+    }
 
     @Override
     public SourceLocation getSourceLocation() {
@@ -10,11 +22,12 @@ public class Token implements IToken {
 
     @Override
     public Kind getKind() {
-        return null;
+        return kind;
     }
 
     @Override
     public String getTokenString() {
-        return null;
+        String str = String.valueOf(source);
+        return str;
     }
 }

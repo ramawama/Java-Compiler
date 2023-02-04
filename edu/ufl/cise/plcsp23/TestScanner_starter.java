@@ -175,6 +175,26 @@ class TestScanner_starter {
 		checkEOF(scanner.next());
 	}
 
+	@Test
+	void equals() throws LexicalException{
+		String input = """
+				==
+				== ==
+				==*==
+				*==+
+				""";
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkToken(Kind.EQ, scanner.next());
+		checkToken(Kind.EQ, scanner.next());
+		checkToken(Kind.EQ, scanner.next());
+		checkToken(Kind.EQ, scanner.next());
+		checkToken(Kind.TIMES, scanner.next());
+		checkToken(Kind.EQ, scanner.next());
+		checkToken(Kind.TIMES, scanner.next());
+		checkToken(Kind.EQ, scanner.next());
+		checkToken(Kind.PLUS, scanner.next());
+	}
+
 
 	@Test
 	void stringLiterals1() throws LexicalException {

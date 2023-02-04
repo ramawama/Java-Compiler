@@ -14,7 +14,7 @@ public class NumLitToken implements INumLitToken {
 
     @Override
     public Kind getKind() {
-        return NUM_LIT;
+        return null;
     }
 
     @Override
