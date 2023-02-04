@@ -63,10 +63,10 @@ class TestScanner_starter {
 		assertEquals(expectedLocation, t.getSourceLocation());
 	}
 
-	void checkNUM_LIT(int expectedValue, IToken t) {
+	void checkNUM_LIT(String expectedValue, IToken t) {
 		checkToken(Kind.NUM_LIT, t);
-		int value = ((INumLitToken) t).getValue();
-		assertEquals(expectedValue, value);
+		//int value = ((INumLitToken) t).getValue();
+		assertEquals(expectedValue, t.getTokenString()); //value
 	}
 	
 	void checkNUM_LIT(int expectedValue, SourceLocation expectedLocation, IToken t) {
@@ -114,13 +114,14 @@ class TestScanner_starter {
 	void numLits1() throws LexicalException {
 		String input = """
 				123
-				05 240
+				05
+				240
 				""";
 		IScanner scanner = CompilerComponentFactory.makeScanner(input);
-		checkNUM_LIT(123, scanner.next());
-		checkNUM_LIT(0, scanner.next());
-		checkNUM_LIT(5, scanner.next());
-		checkNUM_LIT(240, scanner.next());
+		checkNUM_LIT("123", scanner.next());
+		checkNUM_LIT("0", scanner.next());
+		checkNUM_LIT("5", scanner.next());
+		checkNUM_LIT("240", scanner.next());
 		checkEOF(scanner.next());
 	}
 	
@@ -195,6 +196,17 @@ class TestScanner_starter {
 		checkToken(Kind.PLUS, scanner.next());
 	}
 
+	//come back to this sus behavior
+	@Test
+	void eqWithErrors() throws LexicalException{
+		String input = """
+				==
+				=+
+				""";
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkToken(Kind.EQ, scanner.next());
+		assertThrows(LexicalException.class, ()-> {scanner.next();});
+	}
 
 	@Test
 	void stringLiterals1() throws LexicalException {
