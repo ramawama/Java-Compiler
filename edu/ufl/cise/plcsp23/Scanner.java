@@ -101,12 +101,11 @@ public class Scanner implements IScanner{
                                 return new Token(Kind.TIMES, tokenStart, 1, inputChars);
                             }
                         }
-
                         case '-' -> {
                             nextChar();
                             return new Token(Kind.MINUS, tokenStart, 1, inputChars);
                         }
-
+                        //still need !, &, &&, |, ||, %
                         case '0' -> {
                             nextChar();
                             return new Token(Kind.NUM_LIT, tokenStart, 1, inputChars);
@@ -136,7 +135,9 @@ public class Scanner implements IScanner{
                         nextChar();
                         return new Token(Kind.EQ, tokenStart, 2, inputChars);
                     }else{
-                        error("expected =");
+                        nextChar();
+                        return new Token(Kind.ASSIGN, tokenStart, 1, inputChars);
+                        //error("expected =");       either this statement orrr the above two lines idk where else u would identify ASSIGN
                     }
                 }
                 case IN_NUM_LIT -> {
@@ -156,7 +157,7 @@ public class Scanner implements IScanner{
                         //check if reserved word
                         String txt = input.substring(tokenStart, tokenStart + length);
                         Kind kind = reservedWrds.get(txt);
-                        if(kind == null) { kind = Kind.IDENT;};
+                        if(kind == null) { kind = Kind.IDENT;}
                         return new Token(kind, tokenStart, length, inputChars);
                     }
                 }
