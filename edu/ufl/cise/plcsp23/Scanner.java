@@ -46,8 +46,33 @@ public class Scanner implements IScanner{
 
     private static HashMap<String, Kind> reservedWrds;
     static {
-        reservedWrds = new HashMap<String, Kind>();
+        reservedWrds = new HashMap<>();
         reservedWrds.put("if", Kind.RES_if);
+        reservedWrds.put("x", Kind.RES_x);
+        reservedWrds.put("X", Kind.RES_X);
+        reservedWrds.put("x_cart", Kind.RES_x_cart);
+        reservedWrds.put("y", Kind.RES_y);
+        reservedWrds.put("Y", Kind.RES_Y);
+        reservedWrds.put("y_cart", Kind.RES_y_cart);
+        reservedWrds.put("Z", Kind.RES_Z);
+        reservedWrds.put("a", Kind.RES_a);
+        reservedWrds.put("a_polar", Kind.RES_a_polar);
+        reservedWrds.put("r", Kind.RES_r);
+        reservedWrds.put("r_polar", Kind.RES_r_polar);
+        reservedWrds.put("while", Kind.RES_while);
+        reservedWrds.put("sin", Kind.RES_sin);
+        reservedWrds.put("cos", Kind.RES_cos);
+        reservedWrds.put("rand", Kind.RES_rand);
+        reservedWrds.put("atan", Kind.RES_atan);
+        reservedWrds.put("image", Kind.RES_image);
+        reservedWrds.put("pixel", Kind.RES_pixel);
+        reservedWrds.put("int", Kind.RES_int);
+        reservedWrds.put("string", Kind.RES_string);
+        reservedWrds.put("void", Kind.RES_void);
+        reservedWrds.put("nil", Kind.RES_nil);
+        reservedWrds.put("load", Kind.RES_load);
+        reservedWrds.put("display", Kind.RES_display);
+        reservedWrds.put("write", Kind.RES_write);
     }
 
     @Override
@@ -69,8 +94,19 @@ public class Scanner implements IScanner{
                         }
                         case '*' -> {
                             nextChar();
-                            return new Token(Kind.TIMES, tokenStart, 1, inputChars);
+                            if(ch == '*'){
+                                nextChar();
+                                return new Token(Kind.EXP, tokenStart, 2, inputChars);
+                            }else{
+                                return new Token(Kind.TIMES, tokenStart, 1, inputChars);
+                            }
                         }
+
+                        case '-' -> {
+                            nextChar();
+                            return new Token(Kind.MINUS, tokenStart, 1, inputChars);
+                        }
+
                         case '0' -> {
                             nextChar();
                             return new Token(Kind.NUM_LIT, tokenStart, 1, inputChars);
