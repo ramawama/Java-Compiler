@@ -138,9 +138,7 @@ public class Scanner implements IScanner{
                         nextChar();
                         return new Token(Kind.EQ, tokenStart, 2, inputChars);
                     }else{
-                        //nextChar();
-                        //return new Token(Kind.ASSIGN, tokenStart, 1, inputChars);
-                        error("expected =");      // either this statement orrr the above two lines idk where else u would identify ASSIGN
+                        error("expected =");
                     }
                 }
                 case IN_NUM_LIT -> {
