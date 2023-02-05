@@ -14,6 +14,7 @@ public class NumLitToken implements INumLitToken {
         this.length = length;
         this.source = source;
     }
+
     @Override
     public int getValue() {
         return 0;

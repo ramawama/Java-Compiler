@@ -10,16 +10,11 @@
 
 package edu.ufl.cise.plcsp23;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.ArrayList;
-
-import org.junit.jupiter.api.Test;
-
 import edu.ufl.cise.plcsp23.IToken.Kind;
 import edu.ufl.cise.plcsp23.IToken.SourceLocation;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class TestScanner_starter {
 
@@ -280,5 +275,22 @@ class TestScanner_starter {
 			IToken t = scanner.next();
 		});
 	}
+	@Test
+	void specialPunctuation() throws LexicalException{
+		String input = "! & && | || 123";
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkToken(Kind.BANG, scanner.next());
+		checkToken(Kind.BITAND, scanner.next());
+		checkToken(Kind.AND, scanner.next());
+		checkToken(Kind.BITOR, scanner.next());
+		checkToken(Kind.OR, scanner.next());
 
+	}
+	@Test
+	void bitOR() throws LexicalException{
+		String input = "| ||";
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkToken(Kind.BITOR, scanner.next());
+		checkToken(Kind.OR, scanner.next());
+	}
 }
