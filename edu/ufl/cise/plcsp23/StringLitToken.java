@@ -1,7 +1,7 @@
 package edu.ufl.cise.plcsp23;
 
 public class StringLitToken implements IStringLitToken {
-
+    final Kind kind = Kind.STRING_LIT;
     @Override
     public String getValue() {
         return null;
@@ -14,7 +14,7 @@ public class StringLitToken implements IStringLitToken {
 
     @Override
     public Kind getKind() {
-        return null;
+        return kind;
     }
 
     @Override

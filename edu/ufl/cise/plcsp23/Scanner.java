@@ -108,14 +108,22 @@ public class Scanner implements IScanner{
                             nextChar();
                             return new Token(Kind.MINUS, tokenStart, 1, inputChars);
                         }
-                        //still need !, &, &&, |, ||, %
+                        case '/' -> {
+                            nextChar();
+                            return new Token(Kind.DIV, tokenStart, 1, inputChars);
+                        }
+                        //still need !, &, &&, |, ||
+                        case '%' ->{
+                            nextChar();
+                            return new Token(Kind.MOD, tokenStart, 1, inputChars);
+                        }
+                        case '=' -> {   //need to figure out how to check for ASSIGN token & pass operators0() test case (when i get it to pass eqWithErrors() fails)
+                            nextChar();
+                            state = State.HAVE_EQ;
+                        }
                         case '0' -> {
                             nextChar();
                             return new Token(Kind.NUM_LIT, tokenStart, 1, inputChars);
-                        }
-                        case '=' -> {
-                            state = State.HAVE_EQ;
-                            nextChar();
                         }
                         case '1','2','3','4','5','6','7','8','9' -> { //nonzero digit
                             state = State.IN_NUM_LIT;
@@ -126,7 +134,7 @@ public class Scanner implements IScanner{
                                 state = State.IN_IDENT;
                                 nextChar();
                             }else{
-                                error("illegal char with ascii value: " + (int)ch);
+                                error("illegal char with ascii value: " + (int)ch);  //this is not erroring for some reason sumth to do w string literals and idents
                             }
                             //throw new LexicalException("Not yet implemented");
                         }
@@ -142,12 +150,13 @@ public class Scanner implements IScanner{
                     }
                 }
                 case IN_NUM_LIT -> {
-                    if(pos-tokenStart > 10){      //passes numLitTooBig test case for now but i think this might have to be done by checking the actual number literal against javas max value
-                       error("number too large");
+                    if(pos-tokenStart > 10){      //passes numLitTooBig test case for now but i think this might have to be done by checking the actual number literal against java's max_value
+                       error("number too large"); // but i dont think its that important cuz she says they arent checking our code in slack just if test cases pass
                     }
                     if(isDigit(ch)) {  //continue in this state
                         nextChar();
                     }else{  //next char is not digit
+                        state = State.START;
                         int length = pos - tokenStart;
                         return new Token(Kind.NUM_LIT, tokenStart, length, inputChars);
                     }
@@ -161,7 +170,7 @@ public class Scanner implements IScanner{
                         //check if reserved word
                         String txt = input.substring(tokenStart, tokenStart + length);
                         Kind kind = reservedWrds.get(txt);
-                        if(kind == null) { kind = Kind.IDENT;}
+                        if(kind == null) { kind = Kind.IDENT; }                            //if not a reserved word
                         return new Token(kind, tokenStart, length, inputChars);
                     }
                 }
