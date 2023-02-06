@@ -195,25 +195,22 @@ public class Scanner implements IScanner{
                 }
 
                 case IN_NUM_LIT -> {
-                    if(pos-tokenStart > 10){      //passes numLitTooBig test case for now but i think this might have to be done by checking the actual number literal against java's max_value
-                       error("number too large"); // but i dont think its that important cuz she says they arent checking our code in slack just if test cases pass
+                    if(pos-tokenStart > 10){
+                       error("number too large");
                     }
                     else if (ch == '\n' || ch == ' '){ //recognize whitespace and new line
                         state = State.START;
-                        //System.out.println(inputChars);
                         int length = pos - tokenStart;
                         char lineArr[] = Arrays.copyOf(inputChars, length);
                         //nextChar();
 
-                        return new Token(Kind.NUM_LIT,tokenStart , length, inputChars); //token start is updated in intial switch statement ocncerning state change
+                        return new Token(Kind.NUM_LIT,tokenStart , length, inputChars); //token start is updated in initial switch statement concerning state change
                     }
                     else  {  //continue in this state
-                        //System.out.println(ch);
                         nextChar();
                     }
                 }
                 case IN_IDENT -> {
-                    tokenStart = pos;
                     if(isIdentStart(ch) || isDigit(ch)) { nextChar(); }
                     else{
                         //curr char belongs to the next token
@@ -221,7 +218,8 @@ public class Scanner implements IScanner{
                         //check if reserved word
                         String txt = input.substring(tokenStart, tokenStart + length);
                         Kind kind = reservedWrds.get(txt);
-                        if(kind == null) { kind = Kind.IDENT; }                            //if not a reserved word
+                        if(kind == null) { kind = Kind.IDENT; }
+
                         return new Token(kind, tokenStart, length, inputChars);
                     }
                 }
