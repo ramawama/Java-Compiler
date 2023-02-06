@@ -152,13 +152,13 @@ public class Scanner implements IScanner{
                             nextChar();
                             return new Token(Kind.MOD, tokenStart, 1, inputChars);
                         }
-                        case '=' -> {   //need to figure out how to check for ASSIGN token & pass operators0() test case (when i get it to pass eqWithErrors() fails)
+                        case '=' -> {
                             nextChar();
                             state = State.HAVE_EQ;
                         }
                         case '0' -> {
                             nextChar();
-                            return new Token(Kind.NUM_LIT, tokenStart, 1, inputChars);
+                            return new NumLitToken(tokenStart, 1, inputChars);
                         }
                         case '1','2','3','4','5','6','7','8','9' -> { //nonzero digit
                             tokenStart = pos; //update token start for full token
@@ -249,8 +249,7 @@ public class Scanner implements IScanner{
                         int length = pos - tokenStart;
                         //char lineArr[] = Arrays.copyOf(inputChars, length);
                         //nextChar();
-
-                        return new Token(Kind.NUM_LIT,tokenStart , length, inputChars); //token start is updated in initial switch statement concerning state change
+                        return new NumLitToken(tokenStart , length, inputChars); //token start is updated in initial switch statement concerning state change
                     }
                     else  {  //continue in this state
                         nextChar();

@@ -1,14 +1,15 @@
 package edu.ufl.cise.plcsp23;
 
-///Maybe there is a way to extend this from token class cuz all dis does the same ish basically
+
+import static java.lang.Integer.parseInt;
 
 public class NumLitToken implements INumLitToken {
     final Kind kind;
     final int pos;
     final int length;
-    final int[] source;
+    final char[] source;
 
-    public NumLitToken(int pos, int length, int[] source){
+    public NumLitToken(int pos, int length, char[] source){
         this.kind = Kind.NUM_LIT;
         this.pos = pos;
         this.length = length;
@@ -17,7 +18,7 @@ public class NumLitToken implements INumLitToken {
 
     @Override
     public int getValue() {
-        return 0;
+        return parseInt(getTokenString());
     }
 
     @Override
@@ -32,6 +33,7 @@ public class NumLitToken implements INumLitToken {
 
     @Override
     public String getTokenString() {
-        return null;
+        String str = String.valueOf(source,pos,length);
+        return str;
     }
 }

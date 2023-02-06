@@ -58,10 +58,10 @@ class TestScanner_starter {
 		assertEquals(expectedLocation, t.getSourceLocation());
 	}
 
-	void checkNUM_LIT(String expectedValue, IToken t) {
+	void checkNUM_LIT(int expectedValue, IToken t) {
 		checkToken(Kind.NUM_LIT, t);
-		//int value = ((INumLitToken) t).getValue();
-		assertEquals(expectedValue, t.getTokenString()); //value
+		int value = ((INumLitToken)t).getValue();
+		assertEquals(expectedValue, value); //t.getTokenString()
 	}
 	
 	void checkNUM_LIT(int expectedValue, SourceLocation expectedLocation, IToken t) {
@@ -112,10 +112,10 @@ class TestScanner_starter {
 				05 240
 				""";
 		IScanner scanner = CompilerComponentFactory.makeScanner(input);
-		checkNUM_LIT("123", scanner.next());
-		checkNUM_LIT("0", scanner.next());
-		checkNUM_LIT("5", scanner.next());
-		checkNUM_LIT("240", scanner.next());
+		checkNUM_LIT(123, scanner.next());
+		checkNUM_LIT(0, scanner.next());
+		checkNUM_LIT(5, scanner.next());
+		checkNUM_LIT(240, scanner.next());
 		checkEOF(scanner.next());
 	}
 	
