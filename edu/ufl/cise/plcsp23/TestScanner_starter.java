@@ -251,6 +251,14 @@ class TestScanner_starter {
 				""";
 		checkTokens(input, Kind.EXCHANGE, Kind.GT, Kind.GT, Kind.GE, Kind.LT, Kind.LE, Kind.LT, Kind.EOF);
 	}
+
+	@Test
+	void lessThanExchange() throws LexicalException {
+		String input = """
+				<<=<->
+				""";
+		checkTokens(input, Kind.LT, Kind.LE, Kind.EXCHANGE, Kind.EOF);
+	}
 	
 	/** The Scanner should not backtrack so this input should throw an exception */
 	@Test

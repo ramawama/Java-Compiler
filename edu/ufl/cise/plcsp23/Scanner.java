@@ -27,6 +27,9 @@ public class Scanner implements IScanner{
         IN_NUM_LIT,
         HAVE_OR,
         HAVE_AND,
+        LESS_THAN,
+        GREATER_THAN,
+
     }
 
     //gets next char
@@ -118,6 +121,18 @@ public class Scanner implements IScanner{
                          * Rama's ,!, &, &&, |, ||, testing below
                          **/
 
+                        case '<' ->{ //less than multiple permutations so send to state
+                            tokenStart = pos;
+                            nextChar();
+                            state = State.LESS_THAN;
+                        }
+
+                        case '>' ->{
+                            tokenStart = pos;
+                            nextChar();
+                            state = State.GREATER_THAN;
+                        }
+
                         case '!' ->{
                             nextChar();
                             return new Token(Kind.BANG, tokenStart, 1, inputChars);
@@ -161,6 +176,37 @@ public class Scanner implements IScanner{
                         }
                     }
                 }
+
+                case LESS_THAN -> {
+                    if (ch == '='){ // <=
+                        state = State.START;
+                        nextChar();
+                        return new Token(Kind.LE, tokenStart, 2, inputChars);
+                    }
+                    else if (ch == '-'){
+                        nextChar();
+                        if (ch == '>'){
+                            state = State.START;
+                            nextChar();
+                            return new Token(Kind.EXCHANGE, tokenStart, 3, inputChars);
+                        }
+                        else error ("expected >");
+                    }
+                    else return new Token(Kind.LT, tokenStart, 1, inputChars);
+                }
+
+                case GREATER_THAN -> {
+                    if (ch == '='){ // <=
+                        state = State.START;
+                        nextChar();
+                        return new Token(Kind.GE, tokenStart, 2, inputChars);
+                    }
+                    else if (ch == ' '){
+                        return new Token(Kind.LT, tokenStart, 1, inputChars);
+                    }
+                    else return new Token(Kind.GT, tokenStart, 1, inputChars);
+                }
+
                 case HAVE_EQ -> {
                     if(ch == '='){
                         state = State.START;
@@ -201,7 +247,7 @@ public class Scanner implements IScanner{
                     else if (ch == '\n' || ch == ' '){ //recognize whitespace and new line
                         state = State.START;
                         int length = pos - tokenStart;
-                        char lineArr[] = Arrays.copyOf(inputChars, length);
+                        //char lineArr[] = Arrays.copyOf(inputChars, length);
                         //nextChar();
 
                         return new Token(Kind.NUM_LIT,tokenStart , length, inputChars); //token start is updated in initial switch statement concerning state change
