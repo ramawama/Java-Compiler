@@ -27,7 +27,7 @@ public class Token implements IToken {
 
     @Override
     public String getTokenString() {
-        String str = String.valueOf(source);
+        String str = String.valueOf(source,pos,length);
         return str;
     }
 }

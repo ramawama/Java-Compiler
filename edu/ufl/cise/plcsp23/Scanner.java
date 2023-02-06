@@ -146,8 +146,9 @@ public class Scanner implements IScanner{
                             return new Token(Kind.NUM_LIT, tokenStart, 1, inputChars);
                         }
                         case '1','2','3','4','5','6','7','8','9' -> { //nonzero digit
-                            state = State.IN_NUM_LIT;
+                            tokenStart = pos;
                             nextChar();
+                            state = State.IN_NUM_LIT;
                         }
                         default -> {
                             if(isLetter(ch)) {
@@ -197,12 +198,18 @@ public class Scanner implements IScanner{
                     if(pos-tokenStart > 10){      //passes numLitTooBig test case for now but i think this might have to be done by checking the actual number literal against java's max_value
                        error("number too large"); // but i dont think its that important cuz she says they arent checking our code in slack just if test cases pass
                     }
-                    if(isDigit(ch)) {  //continue in this state
-                        nextChar();
-                    }else{  //next char is not digit
+                    else if (ch == '\n' || ch == ' '){
                         state = State.START;
+                        //System.out.println(inputChars);
                         int length = pos - tokenStart;
-                        return new Token(Kind.NUM_LIT, tokenStart, length, inputChars);
+                        char lineArr[] = Arrays.copyOf(inputChars, length);
+                        //nextChar();
+
+                        return new Token(Kind.NUM_LIT,tokenStart , length, inputChars);
+                    }
+                    else  {  //continue in this state
+                        //System.out.println(ch);
+                        nextChar();
                     }
                 }
                 case IN_IDENT -> {
