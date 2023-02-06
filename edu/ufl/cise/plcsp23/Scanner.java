@@ -97,7 +97,7 @@ public class Scanner implements IScanner{
                             nextChar();
                             return new Token(Kind.PLUS, tokenStart, 1, inputChars);
                         }
-                        case '*' -> {
+                        case '*' -> { //change to state version
                             nextChar();
                             if(ch == '*'){
                                 nextChar();
@@ -146,7 +146,7 @@ public class Scanner implements IScanner{
                             return new Token(Kind.NUM_LIT, tokenStart, 1, inputChars);
                         }
                         case '1','2','3','4','5','6','7','8','9' -> { //nonzero digit
-                            tokenStart = pos;
+                            tokenStart = pos; //update token start for full token
                             nextChar();
                             state = State.IN_NUM_LIT;
                         }
@@ -198,14 +198,14 @@ public class Scanner implements IScanner{
                     if(pos-tokenStart > 10){      //passes numLitTooBig test case for now but i think this might have to be done by checking the actual number literal against java's max_value
                        error("number too large"); // but i dont think its that important cuz she says they arent checking our code in slack just if test cases pass
                     }
-                    else if (ch == '\n' || ch == ' '){
+                    else if (ch == '\n' || ch == ' '){ //recognize whitespace and new line
                         state = State.START;
                         //System.out.println(inputChars);
                         int length = pos - tokenStart;
                         char lineArr[] = Arrays.copyOf(inputChars, length);
                         //nextChar();
 
-                        return new Token(Kind.NUM_LIT,tokenStart , length, inputChars);
+                        return new Token(Kind.NUM_LIT,tokenStart , length, inputChars); //token start is updated in intial switch statement ocncerning state change
                     }
                     else  {  //continue in this state
                         //System.out.println(ch);
