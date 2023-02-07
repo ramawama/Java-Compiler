@@ -5,12 +5,16 @@ public class StringLitToken implements IStringLitToken {
     final int pos;
     final int length;
     final char[] source;
+    final int row;
+    final int col;
 
-    public StringLitToken(int pos, int length, char[] source){
+    public StringLitToken(int pos, int length, char[] source, int row, int col){
         this.kind = Kind.STRING_LIT;
         this.pos = pos;
         this.length =length;
         this.source = source;
+        this.row = row;
+        this.col = col;
     }
     @Override
     public String getValue() {
@@ -19,7 +23,7 @@ public class StringLitToken implements IStringLitToken {
 
     @Override
     public SourceLocation getSourceLocation() {
-        return null;
+        return new SourceLocation(row,col);
     }
 
     @Override

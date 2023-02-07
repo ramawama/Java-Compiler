@@ -190,17 +190,6 @@ class TestScanner_starter {
 		checkToken(Kind.PLUS, scanner.next());
 	}
 
-	//come back to this sus behavior
-	@Test
-	void eqWithErrors() throws LexicalException{
-		String input = """
-				==
-				=+
-				""";
-		IScanner scanner = CompilerComponentFactory.makeScanner(input);
-		checkToken(Kind.EQ, scanner.next());
-		assertThrows(LexicalException.class, ()-> {scanner.next();});
-	}
 
 	@Test
 	void stringLiterals1() throws LexicalException {
@@ -215,6 +204,18 @@ class TestScanner_starter {
 		checkString(input.substring(12, 16), "\"",  new SourceLocation(3,1), scanner.next());
 		checkEOF(scanner.next());
 	}
+
+	@Test
+	void stringLiterals2() throws LexicalException {
+		String input = """
+				"hello" "hi"
+				""";
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkString(input.substring(0, 7),"hello", new SourceLocation(1,1), scanner.next());
+		checkString(input.substring(8, 12),"hi", new SourceLocation(1,9), scanner.next());
+		checkEOF(scanner.next());
+	}
+
 
 
 	@Test

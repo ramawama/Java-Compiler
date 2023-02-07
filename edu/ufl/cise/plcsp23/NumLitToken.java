@@ -8,12 +8,16 @@ public class NumLitToken implements INumLitToken {
     final int pos;
     final int length;
     final char[] source;
+    final int row;
+    final int col;
 
-    public NumLitToken(int pos, int length, char[] source){
+    public NumLitToken(int pos, int length, char[] source, int row, int col){
         this.kind = Kind.NUM_LIT;
         this.pos = pos;
         this.length = length;
         this.source = source;
+        this.row = row;
+        this.col = col;
     }
 
     @Override
@@ -23,7 +27,7 @@ public class NumLitToken implements INumLitToken {
 
     @Override
     public SourceLocation getSourceLocation() {
-        return null;
+        return new SourceLocation(row, col);
     }
 
     @Override
