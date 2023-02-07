@@ -301,4 +301,140 @@ class TestScanner_starter {
 		checkToken(Kind.BITOR, scanner.next());
 		checkToken(Kind.OR, scanner.next());
 	}
+
+	@Test
+	void andNothingButComments() throws LexicalException {
+		String input = """
+            ~jerry
+            ~can
+            ~move
+            ~if
+            ~he's
+            ~not
+            ~@#$%&#^%&@
+            ~tired
+            """;
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkEOF(scanner.next());
+	}
+
+	@Test
+	void andNumLitsZeroes() throws LexicalException {
+		String input = """
+            000
+            00
+            001
+            10 0
+            """;
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkNUM_LIT(0, scanner.next());
+		checkNUM_LIT(0, scanner.next());
+		checkNUM_LIT(0, scanner.next());
+		checkNUM_LIT(0, scanner.next());
+		checkNUM_LIT(0, scanner.next());
+		checkNUM_LIT(0, scanner.next());
+		checkNUM_LIT(0, scanner.next());
+		checkNUM_LIT(1, scanner.next());
+		checkNUM_LIT(10, scanner.next());
+		checkNUM_LIT(0, scanner.next());
+		checkEOF(scanner.next());
+	}
+
+	@Test
+	void andIdentsWithNumLits() throws LexicalException {
+		String input = """
+            0f0f0
+            12if21
+            12if 21
+            00 if 12
+            """;
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkNUM_LIT(0, scanner.next());
+		checkToken(Kind.IDENT, "f0f0", new SourceLocation(1, 2), scanner.next());
+		checkNUM_LIT(12, scanner.next());
+		checkToken(Kind.IDENT, "if21", new SourceLocation(2, 3), scanner.next());
+		checkNUM_LIT(12, scanner.next());
+		checkToken(Kind.RES_if, "if", new SourceLocation(3, 3), scanner.next());
+		checkNUM_LIT(21, scanner.next());
+		checkNUM_LIT(0, scanner.next());
+		checkNUM_LIT(0, scanner.next());
+		checkToken(Kind.RES_if, "if", new SourceLocation(4, 4), scanner.next());
+		checkNUM_LIT(12, scanner.next());
+		checkEOF(scanner.next());
+	}
+
+	@Test
+	void andOperators() throws LexicalException {
+		String input = """
+            =&&
+            *****
+            ~====
+            ||?:,|
+            """;
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkToken(Kind.ASSIGN, scanner.next());
+		checkToken(Kind.AND, scanner.next());
+		checkToken(Kind.EXP, scanner.next());
+		checkToken(Kind.EXP, scanner.next());
+		checkToken(Kind.TIMES, scanner.next());
+		checkToken(Kind.OR, scanner.next());
+		checkToken(Kind.QUESTION, scanner.next());
+		checkToken(Kind.COLON, scanner.next());
+		checkToken(Kind.COMMA, scanner.next());
+		checkToken(Kind.BITOR, scanner.next());
+		checkEOF(scanner.next());
+	}
+
+	@Test
+	void andEmptyStrings() throws LexicalException {
+		String input = """
+            \"\"\"\"\"\"\"
+            """;
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkString("", scanner.next());
+		checkString("", scanner.next());
+		checkString("", scanner.next());
+		assertThrows(LexicalException.class, () -> {
+			scanner.next();
+		});
+	}
+
+	@Test
+	void allOperatorsAndSeparators() throws LexicalException {
+		/* Operators and Separators . | , | ? | : | ( | ) | < | > | [ | ] | { | } | = | == | <-> | <= | >= | ! | & | && | | | || |
++ | - | * | ** | / | % */
+		String input = """
+				. , ? : ( ) < > [ ] { } = == <-> <= >= ! & && | || + - * ** / %
+				""";
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkToken(Kind.DOT, scanner.next());
+		checkToken(Kind.COMMA, scanner.next());
+		checkToken(Kind.QUESTION, scanner.next());
+		checkToken(Kind.COLON, scanner.next());
+		checkToken(Kind.LPAREN, scanner.next());
+		checkToken(Kind.RPAREN, scanner.next());
+		checkToken(Kind.LT, scanner.next());
+		checkToken(Kind.GT, scanner.next());
+		checkToken(Kind.LSQUARE, scanner.next());
+		checkToken(Kind.RSQUARE, scanner.next());
+		checkToken(Kind.LCURLY, scanner.next());
+		checkToken(Kind.RCURLY, scanner.next());
+		checkToken(Kind.ASSIGN, scanner.next());
+		checkToken(Kind.EQ, scanner.next());
+		checkToken(Kind.EXCHANGE, scanner.next());
+		checkToken(Kind.LE, scanner.next());
+		checkToken(Kind.GE, scanner.next());
+		checkToken(Kind.BANG, scanner.next());
+		checkToken(Kind.BITAND, scanner.next());
+		checkToken(Kind.AND, scanner.next());
+		checkToken(Kind.BITOR, scanner.next());
+		checkToken(Kind.OR, scanner.next());
+		checkToken(Kind.PLUS, scanner.next());
+		checkToken(Kind.MINUS, scanner.next());
+		checkToken(Kind.TIMES, scanner.next());
+		checkToken(Kind.EXP, scanner.next());
+		checkToken(Kind.DIV, scanner.next());
+		checkToken(Kind.MOD, scanner.next());
+	}
+
 }
