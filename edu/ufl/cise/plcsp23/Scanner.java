@@ -11,6 +11,8 @@ public class Scanner implements IScanner{
     final char[] inputChars;
     int pos;
     char ch;
+    int row;
+    int col;
 
     //constructor
     public Scanner(String input){
@@ -18,6 +20,8 @@ public class Scanner implements IScanner{
         inputChars = Arrays.copyOf(input.toCharArray(), input.length() + 1);
         pos = 0;
         ch = inputChars[0];
+        row = 1;
+        col = 0;
     }
 
     private enum State{
@@ -29,6 +33,8 @@ public class Scanner implements IScanner{
         HAVE_AND,
         LESS_THAN,
         GREATER_THAN,
+        IN_COMMENT,
+
 
     }
 
@@ -91,51 +97,60 @@ public class Scanner implements IScanner{
             switch(state){
                 case START -> {
                     tokenStart = pos;
+                    col++;
                     switch(ch){
                         case 0 -> {    //end of input | empty string
-                            return new Token(Kind.EOF, tokenStart, 0, inputChars);
+                            return new Token(Kind.EOF, tokenStart, 0, inputChars, row, col);
                         }
-                        case ' ', '\n', '\t', '\r' ,'\f' -> { nextChar(); }
+                        case '~' -> {
+                            nextChar();
+                            state = State.IN_COMMENT;
+                        }
+                        case ' ', '\n', '\t', '\r' ,'\f' -> {
+                            if (ch == '\n'){
+                                col = 0;
+                                row++;
+                            }
+                            nextChar();
+                        }
                         case '+' -> {
                             nextChar();
-                            return new Token(Kind.PLUS, tokenStart, 1, inputChars);
+                            return new Token(Kind.PLUS, tokenStart, 1, inputChars, row, col);
                         }
                         case '*' -> { //change to state version
                             nextChar();
                             if(ch == '*'){
                                 nextChar();
-                                return new Token(Kind.EXP, tokenStart, 2, inputChars);
+                                return new Token(Kind.EXP, tokenStart, 2, inputChars, row, col);
                             }else{
-                                return new Token(Kind.TIMES, tokenStart, 1, inputChars);
+                                return new Token(Kind.TIMES, tokenStart, 1, inputChars, row, col);
                             }
                         }
                         case '-' -> {
                             nextChar();
-                            return new Token(Kind.MINUS, tokenStart, 1, inputChars);
+                            return new Token(Kind.MINUS, tokenStart, 1, inputChars, row, col);
                         }
                         case '/' -> {
                             nextChar();
-                            return new Token(Kind.DIV, tokenStart, 1, inputChars);
+                            return new Token(Kind.DIV, tokenStart, 1, inputChars, row, col);
                         }
                         /**
                          * Rama's ,!, &, &&, |, ||, testing below
                          **/
 
                         case '<' ->{ //less than multiple permutations so send to state
-                            tokenStart = pos;
                             nextChar();
                             state = State.LESS_THAN;
                         }
 
                         case '>' ->{
-                            tokenStart = pos;
                             nextChar();
                             state = State.GREATER_THAN;
                         }
 
                         case '!' ->{
                             nextChar();
-                            return new Token(Kind.BANG, tokenStart, 1, inputChars);
+                            return new Token(Kind.BANG, tokenStart, 1, inputChars, row, col);
                         }
 
                         case '&' ->{
@@ -150,7 +165,7 @@ public class Scanner implements IScanner{
 
                         case '%' ->{
                             nextChar();
-                            return new Token(Kind.MOD, tokenStart, 1, inputChars);
+                            return new Token(Kind.MOD, tokenStart, 1, inputChars, row, col);
                         }
                         case '=' -> {
                             nextChar();
@@ -161,7 +176,6 @@ public class Scanner implements IScanner{
                             return new NumLitToken(tokenStart, 1, inputChars);
                         }
                         case '1','2','3','4','5','6','7','8','9' -> { //nonzero digit
-                            tokenStart = pos; //update token start for full token
                             nextChar();
                             state = State.IN_NUM_LIT;
                         }
@@ -177,43 +191,50 @@ public class Scanner implements IScanner{
                     }
                 }
 
+                case IN_COMMENT -> {
+                    if (ch == '\n'){
+                        state = State.START;
+                    }
+                    else nextChar();
+                }
+
                 case LESS_THAN -> {
                     if (ch == '='){ // <=
                         state = State.START;
                         nextChar();
-                        return new Token(Kind.LE, tokenStart, 2, inputChars);
+                        return new Token(Kind.LE, tokenStart, 2, inputChars, row, col);
                     }
                     else if (ch == '-'){
                         nextChar();
                         if (ch == '>'){
                             state = State.START;
                             nextChar();
-                            return new Token(Kind.EXCHANGE, tokenStart, 3, inputChars);
+                            return new Token(Kind.EXCHANGE, tokenStart, 3, inputChars, row, col);
                         }
                         else error ("expected >");
                     }
-                    else return new Token(Kind.LT, tokenStart, 1, inputChars);
+                    else return new Token(Kind.LT, tokenStart, 1, inputChars, row, col);
                 }
 
                 case GREATER_THAN -> {
                     if (ch == '='){ // <=
                         state = State.START;
                         nextChar();
-                        return new Token(Kind.GE, tokenStart, 2, inputChars);
+                        return new Token(Kind.GE, tokenStart, 2, inputChars, row, col);
                     }
                     else if (ch == ' '){
-                        return new Token(Kind.LT, tokenStart, 1, inputChars);
+                        return new Token(Kind.LT, tokenStart, 1, inputChars, row, col);
                     }
-                    else return new Token(Kind.GT, tokenStart, 1, inputChars);
+                    else return new Token(Kind.GT, tokenStart, 1, inputChars, row, col);
                 }
 
                 case HAVE_EQ -> {
                     if(ch == '='){
                         state = State.START;
                         nextChar();
-                        return new Token(Kind.EQ, tokenStart, 2, inputChars);
+                        return new Token(Kind.EQ, tokenStart, 2, inputChars, row, col);
                     }else if (ch == ' '){
-                        return new Token(Kind.ASSIGN, tokenStart, 1, inputChars);
+                        return new Token(Kind.ASSIGN, tokenStart, 1, inputChars, row, col);
                     }
                     else error("expected =");
                 }
@@ -222,9 +243,9 @@ public class Scanner implements IScanner{
                     if(ch == '&'){
                         state = State.START;
                         nextChar();
-                        return new Token(Kind.AND, tokenStart, 2, inputChars);
+                        return new Token(Kind.AND, tokenStart, 2, inputChars, row, col);
                     }else if (ch == ' '){
-                        return new Token(Kind.BITAND, tokenStart, 1, inputChars);
+                        return new Token(Kind.BITAND, tokenStart, 1, inputChars, row, col);
                     }
                     else error("expected &");
                 }
@@ -233,9 +254,9 @@ public class Scanner implements IScanner{
                     if(ch == '|'){
                         state = State.START;
                         nextChar();
-                        return new Token(Kind.OR, tokenStart, 2, inputChars);
+                        return new Token(Kind.OR, tokenStart, 2, inputChars, row, col);
                     }else if (ch == ' '){
-                        return new Token(Kind.BITOR, tokenStart, 1, inputChars);
+                        return new Token(Kind.BITOR, tokenStart, 1, inputChars, row, col);
                     }
                     else error("expected |");
                 }
@@ -261,11 +282,14 @@ public class Scanner implements IScanner{
                         //curr char belongs to the next token
                         int length = pos-tokenStart;
                         //check if reserved word
+                        int tempCol = col;
+                        col = col + length - 1;
                         String txt = input.substring(tokenStart, tokenStart + length);
                         Kind kind = reservedWrds.get(txt);
                         if(kind == null) { kind = Kind.IDENT; }
-
-                        return new Token(kind, tokenStart, length, inputChars);
+                        //System.out.println(length);
+                        //System.out.println(txt);
+                        return new Token(kind, tokenStart, length, inputChars, row, tempCol);
                     }
                 }
                 default ->{
