@@ -212,7 +212,7 @@ class TestScanner_starter {
 				""";
 		IScanner scanner = CompilerComponentFactory.makeScanner(input);
 		checkString(input.substring(0, 7),"hello", new SourceLocation(1,1), scanner.next());
-		checkString(input.substring(8, 12),"hi", new SourceLocation(1,9), scanner.next());
+		checkString(input.substring(8, 12),"hi", new SourceLocation(1,10), scanner.next());
 		checkEOF(scanner.next());
 	}
 

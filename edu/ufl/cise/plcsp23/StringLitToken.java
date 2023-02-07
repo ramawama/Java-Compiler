@@ -7,6 +7,7 @@ public class StringLitToken implements IStringLitToken {
     final char[] source;
     final int row;
     final int col;
+    final String value;
 
     public StringLitToken(int pos, int length, char[] source, int row, int col){
         this.kind = Kind.STRING_LIT;
@@ -15,10 +16,12 @@ public class StringLitToken implements IStringLitToken {
         this.source = source;
         this.row = row;
         this.col = col;
+        this.value = String.valueOf(source, pos+ 1, length-2);
     }
+
     @Override
     public String getValue() {
-        return getTokenString();
+        return value;
     }
 
     @Override
@@ -31,9 +34,6 @@ public class StringLitToken implements IStringLitToken {
         return kind;
     }
 
-    //This & num lit are extended from token class, maybe there is a way to not redefine this function in each one cuz its exactly the same
-    //same with getKind()
-    //not important issues but sumth to think ab once everything is taken care of
     @Override
     public String getTokenString() {
         String str = String.valueOf(source,pos,length);

@@ -39,6 +39,7 @@ public class Scanner implements IScanner{
         ch = inputChars[pos];
     }
 
+
     private void error(String message) throws LexicalException{throw new LexicalException("Error at pos" + pos + ": " + message);}
 
     //Verifying if character is a digit, letter, or other ident characters
@@ -200,7 +201,6 @@ public class Scanner implements IScanner{
                             return new Token(Kind.DIV, tokenStart, 1, inputChars, row, col);
                         }
 
-
                         case '!' ->{
                             nextChar();
                             return new Token(Kind.BANG, tokenStart, 1, inputChars, row, col);
@@ -251,36 +251,35 @@ public class Scanner implements IScanner{
                                 state = State.IN_IDENT;
                                 nextChar();
                             }else{
-                                error("illegal char with ascii value: " + (int)ch);  //this is not erroring for some reason sumth to do w string literals and idents
+                                error("illegal char with ascii value: " + (int)ch);
                             }
-                            //throw new LexicalException("Not yet implemented");
                         }
                     }
                 }
 
                 case IN_STRING_LIT -> {
-                    //System.out.println(ch);
-//                    if (ch == '\"'){
-//                        nextChar();
-//                        if (ch != '\n' || ch != '\b' || ch != '\t' || ch != '\r' || ch != '\"' || ch != '\\'){
-//                            error("Invalid escape sequence");
-//                        }
-//                    }
+                    /*if(ch == '\\'){
+                        nextChar();
+                        switch(ch){
+                            case 'n', 't', 'r', 'f', 'b', '\\', '\'', '\"'-> {
+                                int length = pos - tokenStart;
+                                return new StringLitToken(tokenStart, length, inputChars, row, col);
+                            }
+                            default -> {
+                                error("invalid escape sequence");
+                            }
+                        }
+                    }*/
                     if (ch != '\n' || ch != '\r') {
-//                        System.out.println("next");
-//                        System.out.println(ch);
                         nextChar();
                     }
                     if(ch == '"'){
-                        System.out.println("run");
-                        //curr char belongs to the next token
-                        int length = pos-tokenStart;
-                        //check if reserved word
+                        nextChar();
+                        int length = pos -tokenStart;
                         int tempCol = col;
                         col = col + length;
                         return new StringLitToken(tokenStart, length, inputChars, row, tempCol);
                     }
-                    //else nextChar();
                 }
 
                 case IN_COMMENT -> {
