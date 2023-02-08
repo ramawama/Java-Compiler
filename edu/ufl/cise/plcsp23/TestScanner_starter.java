@@ -230,6 +230,16 @@ class TestScanner_starter {
 			scanner.next();
 		});
 	}
+
+	@Test
+	void escapeSeq() throws LexicalException {
+		String input = """
+				"\\t"
+				""";
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkString("\"\\t\"","\t", new SourceLocation(1,1), scanner.next());
+
+	}
 	
 	@Test
 	void illegalLineTermInStringLiteral() throws LexicalException {

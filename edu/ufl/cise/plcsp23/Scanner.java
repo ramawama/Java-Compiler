@@ -283,17 +283,14 @@ public class Scanner implements IScanner{
                 }
 
                 case IN_ESCAPE -> {
-                    nextChar();
-                    if (ch != '\b' || ch != '\t' || ch != '\n' || ch != '\r' || ch != '\"' || ch != '\\') {
-                        error("Invalid escape sequence");
-                    }
-                    else {
+                    if (ch == '\\'){
                         nextChar();
-                        int length = pos - tokenStart;
-                        int tempCol = col;
-                        col = col + length;
-                        return new StringLitToken(tokenStart, length, inputChars, row, tempCol);
                     }
+                    else if (ch == 'n' || ch == 'r' || ch == 'n' || ch == 't' || ch == 'f' || ch == 'b' || ch == '"' || ch == '\'') {
+                        nextChar();
+                        state = State.IN_STRING_LIT;
+                    }
+                    else error("Invalid escape sequence");
                 }
 
                 case IN_COMMENT -> {
