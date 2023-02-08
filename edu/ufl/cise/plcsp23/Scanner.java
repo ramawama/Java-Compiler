@@ -29,7 +29,7 @@ public class Scanner implements IScanner{
         IN_IDENT,
         IN_NUM_LIT,
         IN_COMMENT,
-
+        IN_ESCAPE,
         IN_STRING_LIT
     }
 
@@ -258,30 +258,38 @@ public class Scanner implements IScanner{
                 }
 
                 case IN_STRING_LIT -> {
-                    /*if (ch != '\n' || ch != '\r') {
+                    if (ch != '"') {
+                        if (ch == '\n' || ch == '\r') {
+                            error("Invalid input character LF or CR");
+                        }
+                        if ((int)ch > 127){ // not in asci
+                            error("Not valid ascii value");
+                        }
+                        if (ch == '\\'){
+                            state = State.IN_ESCAPE;
+                            System.out.println("Help");
+                            //nextChar();
+                        }
                         nextChar();
                     }
-                    if(ch == '"'){
+                    else {
                         nextChar();
-                        int length = pos -tokenStart;
+                        int length = pos - tokenStart;
                         int tempCol = col;
                         col = col + length;
                         return new StringLitToken(tokenStart, length, inputChars, row, tempCol);
-                    }*/
-                    if(ch != '"'){
+                    }
+
+                }
+
+                case IN_ESCAPE -> {
+                    nextChar();
+                    if (ch != '\b' || ch != '\t' || ch != '\n' || ch != '\r' || ch != '\"' || ch != '\\') {
+                        error("Invalid escape sequence");
+                    }
+                    else {
                         nextChar();
-                        if (ch == '\n' || ch == '\r') {
-                            nextChar();
-                        }
-                        if(ch == '\\'){
-                            nextChar();
-                            if( ch == 'n' || ch == 'r' || ch =='t' || ch == 'f' || ch == 'b' || ch == '"' || ch == '\'' || ch =='\\'){
-                                nextChar();
-                            }
-                        }
-                    }else{
-                        nextChar();
-                        int length = pos -tokenStart;
+                        int length = pos - tokenStart;
                         int tempCol = col;
                         col = col + length;
                         return new StringLitToken(tokenStart, length, inputChars, row, tempCol);

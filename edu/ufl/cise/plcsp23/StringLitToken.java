@@ -7,7 +7,7 @@ public class StringLitToken implements IStringLitToken {
     final char[] source;
     final int row;
     final int col;
-    final String value;
+    //final String value;
 
     public StringLitToken(int pos, int length, char[] source, int row, int col) {
         this.kind = Kind.STRING_LIT;
@@ -16,13 +16,20 @@ public class StringLitToken implements IStringLitToken {
         this.source = source;
         this.row = row;
         this.col = col;
-        this.value = String.valueOf(source, pos+1, length-2);
+        //this.value = String.valueOf(source, pos+1, length-2);
     }
 
 
     @Override
     public String getValue() {
-        return value;
+        String ret = "";
+        char[] token = getTokenString().toCharArray();
+        for (int i = 1; i < token.length - 1; i++){ // so quotations are not included
+            //check for escape values here
+
+            ret+=(String.valueOf(token[i]));
+        }
+        return ret;
     }
 
     @Override
