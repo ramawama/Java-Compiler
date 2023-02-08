@@ -26,8 +26,21 @@ public class StringLitToken implements IStringLitToken {
         char[] token = getTokenString().toCharArray();
         for (int i = 1; i < token.length - 1; i++){ // so quotations are not included
             //check for escape values here
-
-            ret+=(String.valueOf(token[i]));
+            if(token[i] == '\\'){
+                i++;
+                switch(token[i]){
+                    case 'n' -> {ret += String.valueOf('\n');}
+                    case 't' -> { ret += String.valueOf('\t');}
+                    case '"' -> {ret += String.valueOf('\"');}
+                    case 'b' -> {ret += String.valueOf('\b');}
+                    case 'r' -> {ret += String.valueOf('\r');}
+                    case 'f' -> {ret += String.valueOf('\f');}
+                    case '\''-> {ret += String.valueOf('\'');}
+                    case '\\' -> {ret += String.valueOf('\\');}
+                }
+            }else{
+                ret+=(String.valueOf(token[i]));
+            }
         }
         return ret;
     }
