@@ -16,38 +16,13 @@ public class StringLitToken implements IStringLitToken {
         this.source = source;
         this.row = row;
         this.col = col;
-        this.value = String.valueOf(source, pos, length);
+        this.value = String.valueOf(source, pos+1, length-2);
     }
 
-    public String escapeSeq(String val) {
-        StringBuilder builder = new StringBuilder();
-        for(int i = 1; i < val.length()-1; i++) {
-            char ch = val.charAt(i);
-            if (ch == '\\' ) {
-                i++;
-                if(i >= val.length()){
-                    System.out.println("too big");
-                    break;
-                }
-                switch (val.charAt(i)) {
-                    case 'n', 't', 'r', 'f', 'b', '\\', '\'', '\"' -> {
-                        builder.append("\\" + val.charAt(i));
-                    }
-                    default -> {
-                        //throw new LexicalException("invalid escape sequence");
-                        System.out.println("invalid");
-                    }
-                }
-            }else if (ch != '"'){
-                builder.append(ch);
-            }
-        }
-        return builder.toString();
-    }
 
     @Override
     public String getValue() {
-        return escapeSeq(value);//.substring(1, escapeSeq(value).length() - 1);
+        return value;
     }
 
     @Override

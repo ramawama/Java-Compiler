@@ -258,10 +258,28 @@ public class Scanner implements IScanner{
                 }
 
                 case IN_STRING_LIT -> {
-                    if (ch != '\n' || ch != '\r') {
+                    /*if (ch != '\n' || ch != '\r') {
                         nextChar();
                     }
                     if(ch == '"'){
+                        nextChar();
+                        int length = pos -tokenStart;
+                        int tempCol = col;
+                        col = col + length;
+                        return new StringLitToken(tokenStart, length, inputChars, row, tempCol);
+                    }*/
+                    if(ch != '"'){
+                        nextChar();
+                        if (ch == '\n' || ch == '\r') {
+                            nextChar();
+                        }
+                        if(ch == '\\'){
+                            nextChar();
+                            if( ch == 'n' || ch == 'r' || ch =='t' || ch == 'f' || ch == 'b' || ch == '"' || ch == '\'' || ch =='\\'){
+                                nextChar();
+                            }
+                        }
+                    }else{
                         nextChar();
                         int length = pos -tokenStart;
                         int tempCol = col;
