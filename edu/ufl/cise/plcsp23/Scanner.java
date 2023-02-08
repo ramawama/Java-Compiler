@@ -258,18 +258,6 @@ public class Scanner implements IScanner{
                 }
 
                 case IN_STRING_LIT -> {
-                    /*if(ch == '\\'){
-                        nextChar();
-                        switch(ch){
-                            case 'n', 't', 'r', 'f', 'b', '\\', '\'', '\"'-> {
-                                int length = pos - tokenStart;
-                                return new StringLitToken(tokenStart, length, inputChars, row, col);
-                            }
-                            default -> {
-                                error("invalid escape sequence");
-                            }
-                        }
-                    }*/
                     if (ch != '\n' || ch != '\r') {
                         nextChar();
                     }
