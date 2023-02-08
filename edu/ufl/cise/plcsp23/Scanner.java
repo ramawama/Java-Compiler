@@ -267,7 +267,7 @@ public class Scanner implements IScanner{
                         }
                         if (ch == '\\'){
                             state = State.IN_ESCAPE;
-                            System.out.println("Help");
+                            //System.out.println("Help");
                             //nextChar();
                         }
                         nextChar();

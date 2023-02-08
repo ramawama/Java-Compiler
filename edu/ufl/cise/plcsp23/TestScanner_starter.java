@@ -448,4 +448,26 @@ class TestScanner_starter {
 		checkToken(Kind.MOD, scanner.next());
 	}
 
+	@Test
+	void stringLiteralTest() throws LexicalException {
+		String input = """
+				 \"\\"Hello World\\"\"
+				 """;
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkString("\"Hello World\"", scanner.next());
+	}
+
+	@Test
+	void andIllegalCarriageReturn() throws LexicalException {
+		String input = """
+				"\\r" ~ legal
+				"\r" ~ illegal
+				""";
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkString("\"\\r\"", "\r", new SourceLocation(1, 1), scanner.next());
+		assertThrows(LexicalException.class, () -> {
+			scanner.next();
+		});
+	}
+
 }
