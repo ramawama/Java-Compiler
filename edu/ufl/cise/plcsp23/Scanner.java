@@ -267,8 +267,6 @@ public class Scanner implements IScanner{
                         }
                         if (ch == '\\'){
                             state = State.IN_ESCAPE;
-                            //System.out.println("Help");
-                            //nextChar();
                         }
                         nextChar();
                     }
@@ -286,7 +284,7 @@ public class Scanner implements IScanner{
                     if (ch == '\\'){
                         nextChar();
                     }
-                    else if (ch == 'n' || ch == 'r' || ch == 'n' || ch == 't' || ch == 'f' || ch == 'b' || ch == '"' || ch == '\'') {
+                    else if (ch == 'r' || ch == 'n' || ch == 't' || ch == 'f' || ch == 'b' || ch == '"' || ch == '\'') {
                         nextChar();
                         state = State.IN_STRING_LIT;
                     }
@@ -306,8 +304,6 @@ public class Scanner implements IScanner{
                     }
                     else if (ch == '\n' || ch == ' ' || !isDigit(ch)){ //recognize whitespace and new line
                         int length = pos - tokenStart;
-                        //char lineArr[] = Arrays.copyOf(inputChars, length);
-                        //nextChar();
                         int tempCol = col;
                         col = length;
                         return new NumLitToken(tokenStart , length, inputChars, row, tempCol); //token start is updated in initial switch statement concerning state change
@@ -327,8 +323,6 @@ public class Scanner implements IScanner{
                         String txt = input.substring(tokenStart, tokenStart + length);
                         Kind kind = reservedWrds.get(txt);
                         if(kind == null) { kind = Kind.IDENT; }
-                        //System.out.println(length);
-                        //System.out.println(txt);
                         return new Token(kind, tokenStart, length, inputChars, row, tempCol);
                     }
                 }
