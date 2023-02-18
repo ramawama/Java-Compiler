@@ -215,8 +215,35 @@ class TestScanner_starter {
 		checkString(input.substring(8, 12),"hi", new SourceLocation(1,10), scanner.next());
 		checkEOF(scanner.next());
 	}
+	/*
+	@Test
+	void stringEscape() throws LexicalException {
+		String input = """
+			"\\b \\t \\n \\r \\" \\\\"
+			""";
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		//checkString(input.substring(),);
+		checkEOF(scanner.next());
+	}
 
+	@Test
+	void identsWithUnderscore() throws LexicalException{
+		String input = """
+				i0
+				i1
+				_
+				__
+				a_b_c
+				""";
+	}
 
+	@Test
+	void nonTerminatedString() throws LexicalException{
+		String input = """
+				"abc
+				""";
+
+	}*/
 
 	@Test
 	void illegalEscape() throws LexicalException {
