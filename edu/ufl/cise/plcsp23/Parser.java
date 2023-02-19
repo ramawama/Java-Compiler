@@ -37,11 +37,14 @@ public class Parser implements IParser{
 
     private Expr conditional() throws PLCException{
         Expr guard = expression();
+        Expr falseCase = null;
             if(match(Kind.QUESTION)){
                 IToken quest = prev;
                 Expr trueCase = conditional();
-                Expr falseCase = conditional();
-                guard = new ConditionalExpr(quest, guard, trueCase, falseCase);
+                if(match(Kind.QUESTION)){
+                    falseCase = conditional();
+                }
+                return new ConditionalExpr(quest, guard, trueCase, falseCase);
             }
         return guard;
     }
@@ -129,7 +132,9 @@ public class Parser implements IParser{
             return new RandomExpr(prev);
         else if(match(Kind.LPAREN)){
             expr = expression();
-            match(Kind.RPAREN);
+            if(!match(Kind.RPAREN)){
+                throw new SyntaxException("expected paren");
+            }
         }
         else{
             throw new SyntaxException("expected literal, ident, or paren");
