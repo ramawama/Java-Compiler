@@ -1,17 +1,15 @@
 package edu.ufl.cise.plcsp23;
 
-import static edu.ufl.cise.plcsp23.IToken.Kind;
-
 import edu.ufl.cise.plcsp23.ast.*;
 
-import java.text.ParseException;
+import static edu.ufl.cise.plcsp23.IToken.Kind;
 
 public class Parser implements IParser{
     private IScanner scanner;
     private IToken current;
     private IToken prev;      //previous token
 
-    public Parser(Scanner scanner) throws PLCException{
+    public Parser(Scanner scanner) throws PLCException{ //consume()
         this.scanner = scanner;
         current = scanner.next();
     }

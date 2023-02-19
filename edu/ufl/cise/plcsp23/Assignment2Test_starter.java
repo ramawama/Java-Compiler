@@ -267,5 +267,124 @@ void unary2()
 		getAST(input);
 	});
 }
+
+	@Test
+	void andPowerExpressions() throws PLCException {
+		String input = " 2 ** 3 ** 5 "; // 2 ** (3 ** 5)
+		BinaryExpr be0 = checkBinary(getAST(input), Kind.EXP);
+		checkNumLit(be0.getLeft(), 2);
+		BinaryExpr be1 = checkBinary(be0.getRight(), Kind.EXP);
+		checkNumLit(be1.getLeft(), 3);
+		checkNumLit(be1.getRight(), 5);
+	}
+
+	@Test
+	void andParentheses() throws PLCException {
+		String input = " ( 7 ** 11 ) ** 2 ** 3 ** 5 "; // ( 7 ** 11 ) ** (2 ** (3 ** 5))
+		BinaryExpr be0 = checkBinary(getAST(input), Kind.EXP);
+		BinaryExpr bel1 = checkBinary(be0.getLeft(), Kind.EXP);
+		checkNumLit(bel1.getLeft(), 7);
+		checkNumLit(bel1.getRight(), 11);
+		BinaryExpr ber1 = checkBinary(be0.getRight(), Kind.EXP);
+		checkNumLit(ber1.getLeft(), 2);
+		BinaryExpr berr2 = checkBinary(ber1.getRight(), Kind.EXP);
+		checkNumLit(berr2.getLeft(), 3);
+		checkNumLit(berr2.getRight(), 5);
+	}
+
+	@Test
+	void andMismatchedParentheses() throws PLCException {
+		String input = " (((oh)) ";
+		assertThrows(SyntaxException.class, () -> {
+			getAST(input);
+		});
+	}
+
+	@Test
+	void andDeepParentheses() throws PLCException {
+		String input = " ((((((((1)))))))) ";
+		AST e = getAST(input);
+		checkNumLit(e, 1);
+	}
+
+	@Test
+	void andUnaryChain() throws PLCException {
+		String input = " !-atan!--!!cos sin love";
+		UnaryExpr u1 = checkUnary(getAST(input), Kind.BANG);
+		UnaryExpr u2 = checkUnary(u1.getE(), Kind.MINUS);
+		UnaryExpr u3 = checkUnary(u2.getE(), Kind.RES_atan);
+		UnaryExpr u4 = checkUnary(u3.getE(), Kind.BANG);
+		UnaryExpr u5 = checkUnary(u4.getE(), Kind.MINUS);
+		UnaryExpr u6 = checkUnary(u5.getE(), Kind.MINUS);
+		UnaryExpr u7 = checkUnary(u6.getE(), Kind.BANG);
+		UnaryExpr u8 = checkUnary(u7.getE(), Kind.BANG);
+		UnaryExpr u9 = checkUnary(u8.getE(), Kind.RES_cos);
+		UnaryExpr u10 = checkUnary(u9.getE(), Kind.RES_sin);
+		checkIdent(u10.getE(), "love");
+	}
+
+	@Test
+	void andAMixOfOperators() throws PLCException {
+		String input = " !1 + -2 - -3 * atan 4 ** 5";
+		BinaryExpr e0 = checkBinary(getAST(input), Kind.EXP);
+		checkNumLit(e0.getRight(), 5);
+		BinaryExpr el1 = checkBinary(e0.getLeft(), Kind.MINUS);
+		BinaryExpr ell2 = checkBinary(el1.getLeft(), Kind.PLUS);
+		UnaryExpr elll3 = checkUnary(ell2.getLeft(), Kind.BANG);
+		checkNumLit(elll3.getE(), 1);
+		UnaryExpr ellr3 = checkUnary(ell2.getRight(), Kind.MINUS);
+		checkNumLit(ellr3.getE(), 2);
+		BinaryExpr elr2 = checkBinary(el1.getRight(), Kind.TIMES);
+		UnaryExpr elrl3 = checkUnary(elr2.getLeft(), Kind.MINUS);
+		checkNumLit(elrl3.getE(), 3);
+		UnaryExpr elrr3 = checkUnary(elr2.getRight(), Kind.RES_atan);
+		checkNumLit(elrr3.getE(), 4);
+	}
+
+	@Test
+	void andLogicalOperators() throws PLCException {
+		String input = "1 || (if 2 && 3 ? 4 || 5 ? 6 || 7 && 8 && 9) && 10";
+		BinaryExpr e0 = checkBinary(getAST(input), Kind.OR);
+		checkNumLit(e0.getLeft(), 1);
+		BinaryExpr er1 = checkBinary(e0.getRight(), Kind.AND);
+		checkNumLit(er1.getRight(), 10);
+		ConditionalExpr erl2 = checkConditional(er1.getLeft());
+		BinaryExpr erlg3 = checkBinary(erl2.getGuard(), Kind.AND);
+		checkNumLit(erlg3.getLeft(), 2);
+		checkNumLit(erlg3.getRight(), 3);
+		BinaryExpr erlt3 = checkBinary(erl2.getTrueCase(), Kind.OR);
+		checkNumLit(erlt3.getLeft(), 4);
+		checkNumLit(erlt3.getRight(), 5);
+		BinaryExpr erlf3 = checkBinary(erl2.getFalseCase(), Kind.OR);
+		checkNumLit(erlf3.getLeft(), 6);
+		BinaryExpr erlfr4 = checkBinary(erlf3.getRight(), Kind.AND);
+		checkNumLit(erlfr4.getRight(), 9);
+		BinaryExpr erlfrl5 = checkBinary(erlfr4.getLeft(), Kind.AND);
+		checkNumLit(erlfrl5.getLeft(), 7);
+		checkNumLit(erlfrl5.getRight(), 8);
+	}
+
+	@Test
+	void andSomeSentence() throws PLCException {
+		String input = """
+			if youre- atan person | see?
+			you & me? ~us?
+			we- sin together ~<3
+			""";
+		ConditionalExpr c = checkConditional(getAST(input));
+		BinaryExpr cg = checkBinary(c.getGuard(), Kind.BITOR);
+		checkIdent(cg.getRight(), "see");
+		BinaryExpr cgl = checkBinary(cg.getLeft(), Kind.MINUS);
+		checkIdent(cgl.getLeft(), "youre");
+		UnaryExpr cglr = checkUnary(cgl.getRight(), Kind.RES_atan);
+		checkIdent(cglr.getE(), "person");
+		BinaryExpr ct = checkBinary(c.getTrueCase(), Kind.BITAND);
+		checkIdent(ct.getLeft(), "you");
+		checkIdent(ct.getRight(), "me");
+		BinaryExpr cf = checkBinary(c.getFalseCase(), Kind.MINUS);
+		checkIdent(cf.getLeft(), "we");
+		UnaryExpr cfr = checkUnary(cf.getRight(), Kind.RES_sin);
+		checkIdent(cfr.getE(), "together");
+	}
 }
 
