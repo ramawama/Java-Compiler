@@ -95,7 +95,7 @@ public class Parser implements IParser{
         Expr expr = additive();
         while(match(Kind.EXP)){
             IToken op = prev;
-            Expr right = expression();
+            Expr right = power();
             expr = new BinaryExpr(op, expr, op.getKind(), right);
         }
         return expr;
