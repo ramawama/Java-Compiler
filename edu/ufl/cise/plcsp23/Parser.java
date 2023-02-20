@@ -29,7 +29,9 @@ public class Parser implements IParser{
     //add a try catch block to each method or just the primary() method?
     private Expr expression() throws PLCException{
         //try{
-            return orExpr();
+        if(match(Kind.RES_if)) return conditional();
+
+        else return orExpr();
         /*}catch(ParseException e) {
             throw new ParseException(e.getMessage(), e.getErrorOffset());
         }*/
