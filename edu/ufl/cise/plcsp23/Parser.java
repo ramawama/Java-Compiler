@@ -35,18 +35,27 @@ public class Parser implements IParser{
         }*/
     }
 
-    private Expr conditional() throws PLCException{
-        Expr guard = expression();
-        Expr falseCase = null;
-            if(match(Kind.QUESTION)){
-                IToken quest = prev;
-                Expr trueCase = conditional();
-                if(match(Kind.QUESTION)){
-                    falseCase = conditional();
-                }
-                return new ConditionalExpr(quest, guard, trueCase, falseCase);
-            }
-        return guard;
+    private Expr conditional() throws PLCException {
+        Expr guard, trueCase = null, falseCase = null;
+        IToken first = prev;
+        if (match(Kind.RES_if)) { //means nested conditional so recursion
+            guard = conditional();
+        } else {
+            guard = expression();
+
+        }
+        if (match(Kind.QUESTION)) {
+            if (match(Kind.RES_if)) trueCase = conditional();
+            else trueCase = expression();
+        }
+        if (match(Kind.QUESTION)){
+            if (match(Kind.RES_if)) falseCase = conditional();
+            else falseCase = expression();
+
+        }
+        return new ConditionalExpr(first,guard,trueCase,falseCase);
+
+
     }
 
     private Expr orExpr() throws PLCException{
@@ -83,7 +92,7 @@ public class Parser implements IParser{
         Expr expr = additive();
         while(match(Kind.EXP)){
             IToken op = prev;
-            Expr right = additive();
+            Expr right = expression();
             expr = new BinaryExpr(op, expr, op.getKind(), right);
         }
         return expr;
@@ -132,9 +141,7 @@ public class Parser implements IParser{
             return new RandomExpr(prev);
         else if(match(Kind.LPAREN)){
             expr = expression();
-            if(!match(Kind.RPAREN)){
-                throw new SyntaxException("expected paren");
-            }
+            if(!match(Kind.RPAREN)) throw new SyntaxException("expected right paran, )");
         }
         else{
             throw new SyntaxException("expected literal, ident, or paren");

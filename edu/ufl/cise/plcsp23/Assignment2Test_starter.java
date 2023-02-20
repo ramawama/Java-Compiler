@@ -272,6 +272,7 @@ void unary2()
 	void andPowerExpressions() throws PLCException {
 		String input = " 2 ** 3 ** 5 "; // 2 ** (3 ** 5)
 		BinaryExpr be0 = checkBinary(getAST(input), Kind.EXP);
+
 		checkNumLit(be0.getLeft(), 2);
 		BinaryExpr be1 = checkBinary(be0.getRight(), Kind.EXP);
 		checkNumLit(be1.getLeft(), 3);
@@ -385,6 +386,12 @@ void unary2()
 		checkIdent(cf.getLeft(), "we");
 		UnaryExpr cfr = checkUnary(cf.getRight(), Kind.RES_sin);
 		checkIdent(cfr.getE(), "together");
+	}
+	@Test
+	void primary1() throws PLCException {
+		String input = " (b) "; // Ident
+		Expr e = (Expr) getAST(input);
+		checkIdent(e, "b");
 	}
 }
 
