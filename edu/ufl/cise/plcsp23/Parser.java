@@ -48,11 +48,12 @@ public class Parser implements IParser{
             if (match(Kind.RES_if)) trueCase = conditional();
             else trueCase = expression();
         }
+        else throw new SyntaxException("expected ?");
         if (match(Kind.QUESTION)){
             if (match(Kind.RES_if)) falseCase = conditional();
             else falseCase = expression();
-
         }
+        else throw new SyntaxException("expected ?");
         return new ConditionalExpr(first,guard,trueCase,falseCase);
 
 
