@@ -215,14 +215,15 @@ class TestScanner_starter {
 		checkString(input.substring(8, 12),"hi", new SourceLocation(1,10), scanner.next());
 		checkEOF(scanner.next());
 	}
-	/*
+
+	//new tests
 	@Test
 	void stringEscape() throws LexicalException {
 		String input = """
 			"\\b \\t \\n \\r \\" \\\\"
 			""";
 		IScanner scanner = CompilerComponentFactory.makeScanner(input);
-		//checkString(input.substring(),);
+		checkString(input.substring(0, 19),"\b \t \n \r \" \\\"", new SourceLocation(1,1), scanner.next());
 		checkEOF(scanner.next());
 	}
 
@@ -235,6 +236,12 @@ class TestScanner_starter {
 				__
 				a_b_c
 				""";
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		checkToken(Kind.IDENT,"i0", new SourceLocation(1,1), scanner.next());
+		checkToken(Kind.IDENT,"i1", new SourceLocation(2,1), scanner.next());
+		checkToken(Kind.IDENT,"_", new SourceLocation(3,1), scanner.next());
+		checkToken(Kind.IDENT,"__", new SourceLocation(4,1), scanner.next());
+		checkToken(Kind.IDENT,"a_b_c", new SourceLocation(5,1), scanner.next());
 	}
 
 	@Test
@@ -242,8 +249,12 @@ class TestScanner_starter {
 		String input = """
 				"abc
 				""";
-
-	}*/
+		IScanner scanner = CompilerComponentFactory.makeScanner(input);
+		//checkString("\"abc\"","abc", new SourceLocation(1,1), scanner.next());
+		assertThrows(LexicalException.class, () -> {
+			scanner.next();
+		});
+	}
 
 	@Test
 	void illegalEscape() throws LexicalException {

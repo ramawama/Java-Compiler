@@ -26,7 +26,6 @@ public class Parser implements IParser{
         return false;
     }
 
-    //add a try catch block to each method or just the primary() method?
     private Expr expression() throws PLCException{
         //try{
         if(match(Kind.RES_if)) return conditional();
@@ -130,7 +129,7 @@ public class Parser implements IParser{
         return primary();
     }
 
-    private Expr primary() throws PLCException{               //add try block prob. change error to parseException? (in header & instead of syntax)
+    private Expr primary() throws PLCException{               //add try block prob
         Expr expr;
         if(match(Kind.STRING_LIT))
             return new StringLitExpr(prev);
@@ -144,7 +143,7 @@ public class Parser implements IParser{
             return new RandomExpr(prev);
         else if(match(Kind.LPAREN)){
             expr = expression();
-            if(!match(Kind.RPAREN)) throw new SyntaxException("expected right paran, )");
+            if(!match(Kind.RPAREN)) throw new SyntaxException("expected right paren, )");
         }
         else{
             throw new SyntaxException("expected literal, ident, or paren");

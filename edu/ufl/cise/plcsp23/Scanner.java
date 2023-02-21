@@ -102,6 +102,10 @@ public class Scanner implements IScanner{
                             nextChar();
                             state = State.IN_STRING_LIT;
                         }
+                        case '_' -> {
+                            nextChar();
+                            state = State.IN_IDENT;
+                        }
                         case '~' -> {
                             nextChar();
                             state = State.IN_COMMENT;
