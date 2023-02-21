@@ -196,6 +196,7 @@ public class Scanner implements IScanner{
                             nextChar();
                             return new Token(Kind.MINUS, tokenStart, 1, inputChars, row, col);
                         }
+
                         case '/' -> {
                             nextChar();
                             return new Token(Kind.DIV, tokenStart, 1, inputChars, row, col);

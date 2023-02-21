@@ -131,7 +131,14 @@ class Assignment2Test_starter {
 			getAST(input);
 		});
 	}
-	
+	@Test
+	void emptyExpression() throws PLCException {
+		String input = " (()) ";
+		assertThrows(SyntaxException.class, () -> {
+			getAST(input);
+		});
+	}
+
 	@Test
 	void numLit() throws PLCException {
 		String input= "3";
@@ -343,6 +350,16 @@ void unary2()
 	}
 
 	@Test
+	void binaryTemp() throws PLCException {
+		String input = "(2 * 3) * 4"; // Parentheses present
+		BinaryExpr be = checkBinary(getAST(input), Kind.TIMES);
+		checkNumLit(be.getRight(), 4);
+		BinaryExpr be1 = checkBinary(be.getLeft(), Kind.TIMES);
+		checkNumLit(be1.getLeft(), 2);
+		checkNumLit(be1.getRight(), 3);
+	}
+
+	@Test
 	void andMismatchedParentheses() throws PLCException {
 		String input = " (((oh)) ";
 		assertThrows(SyntaxException.class, () -> {
@@ -355,6 +372,13 @@ void unary2()
 		String input = " ((((((((1)))))))) ";
 		AST e = getAST(input);
 		checkNumLit(e, 1);
+	}
+	@Test
+	void andDeepParentheses1() throws PLCException {
+		String input = " ((o)(o)) ";
+		assertThrows(SyntaxException.class, () -> {
+			getAST(input);
+		});
 	}
 
 	@Test
