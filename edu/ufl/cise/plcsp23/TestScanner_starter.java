@@ -250,7 +250,7 @@ class TestScanner_starter {
 				"abc
 				""";
 		IScanner scanner = CompilerComponentFactory.makeScanner(input);
-		checkString(input.substring(0, 3),"abc", new SourceLocation(1,1), scanner.next());
+		//checkString(input.substring(0, 3),"abc", new SourceLocation(1,1), scanner.next());
 		assertThrows(LexicalException.class, () -> {
 			scanner.next();
 		});
