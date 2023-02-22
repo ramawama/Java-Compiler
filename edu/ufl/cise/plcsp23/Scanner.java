@@ -280,6 +280,7 @@ public class Scanner implements IScanner{
                         int length = pos - tokenStart;
                         int tempCol = col;
                         col = col + length;
+                        //if (inputChars[length+tokenStart -1] != '"') error("Expected \"");
                         return new StringLitToken(tokenStart, length, inputChars, row, tempCol);
                     }
 

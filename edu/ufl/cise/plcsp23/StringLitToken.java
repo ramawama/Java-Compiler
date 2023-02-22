@@ -24,6 +24,7 @@ public class StringLitToken implements IStringLitToken {
     public String getValue() {
         String ret = "";
         char[] token = getTokenString().toCharArray();
+
         for (int i = 1; i < token.length - 1; i++){ // so quotations are not included
             //check for escape values here
             if(token[i] == '\\'){
