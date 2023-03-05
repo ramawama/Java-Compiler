@@ -76,7 +76,10 @@ public interface IToken {
 		DIV, // /
 		MOD, // %
 		EOF,
-		ERROR
+		ERROR,
+		RES_red,
+		RES_grn,
+		RES_blu
 	}
 
 
@@ -100,6 +103,8 @@ public interface IToken {
 	 * @return
 	 */
 	public String getTokenString();
+
+
 
 
 }

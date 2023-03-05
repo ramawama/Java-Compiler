@@ -13,17 +13,34 @@ package edu.ufl.cise.plcsp23.ast;
 import edu.ufl.cise.plcsp23.IToken;
 import edu.ufl.cise.plcsp23.PLCException;
 
-public class RandomExpr extends Expr{
+public class Ident extends AST {
+	
+	NameDef def;
 
-	public RandomExpr(IToken firstToken) {
+	public Ident(IToken firstToken) {
 		super(firstToken);
 	}
 
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws PLCException {
-		return v.visitRandomExpr(this, arg);
+		return v.visitIdent(this, arg);
 	}
 	
-	
+	public String getName() {
+		return firstToken.getTokenString();
+	}
+
+	public NameDef getDef() {
+		return def;
+	}
+
+	public void setDef(NameDef def) {
+		this.def = def;
+	}
+
+	@Override
+	public String toString() {
+		return "Ident [getName()=" + getName() + ", getDef()=" + getDef() + "]";
+	}
 
 }

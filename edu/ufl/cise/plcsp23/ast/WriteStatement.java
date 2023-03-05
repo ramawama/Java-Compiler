@@ -13,17 +13,27 @@ package edu.ufl.cise.plcsp23.ast;
 import edu.ufl.cise.plcsp23.IToken;
 import edu.ufl.cise.plcsp23.PLCException;
 
-public class RandomExpr extends Expr{
+public class WriteStatement extends Statement {
 
-	public RandomExpr(IToken firstToken) {
+	final Expr e;
+
+	public WriteStatement(IToken firstToken, Expr e) {
 		super(firstToken);
+		this.e = e;
 	}
 
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws PLCException {
-		return v.visitRandomExpr(this, arg);
+		return v.visitWriteStatement(this, arg);
 	}
-	
-	
+
+	public Expr getE() {
+		return e;
+	}
+
+	@Override
+	public String toString() {
+		return "StatementWrite [e=" + e + "]";
+	}
 
 }
