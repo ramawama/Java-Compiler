@@ -11,7 +11,6 @@ public class Parser implements IParser{
     private IScanner scanner;
     private IToken current;
     private IToken prev;//previous token
-    private Block block;
 
     public Parser(Scanner scanner) throws PLCException{ //consume()
         this.scanner = scanner;
@@ -37,6 +36,7 @@ public class Parser implements IParser{
         Type progType = Type.getType(first); // will return an error if it isnt approved type
         Ident ident;
         List<NameDef> paramList;
+        Block block;
         if(match(Kind.IDENT)){
             ident = new Ident(prev); // create ident object if its a match
 
@@ -140,8 +140,11 @@ public class Parser implements IParser{
             switch (first.getKind()){
                 case IDENT -> {
                     LValue retL = lValue();
-                    retExpr = expression();
-                    ret.add(new AssignmentStatement(first,retL,retExpr));
+                    if (match(Kind.ASSIGN)){
+                        retExpr = expression();
+                        ret.add(new AssignmentStatement(first,retL,retExpr));
+                    }
+                    else throw new SyntaxException("Expected =");
                 }
                 case RES_write -> {
                     //System.out.println(current.getTokenString());
@@ -153,21 +156,23 @@ public class Parser implements IParser{
                     retExpr = expression();
                     retBlock = block();
                     ret.add(new WhileStatement(first,retExpr,retBlock));
-
                 }
                 default -> throw new SyntaxException("Expected statement");
             }
-            if(!match(Kind.DOT)) throw new SyntaxException("Expected .");
             if(match(Kind.RCURLY)) break;
+            if(!match(Kind.DOT)) throw new SyntaxException("Expected .");
+
         }
 
         return ret;
     }
 
     private LValue lValue() throws PLCException{
-        IToken first = current;
+        IToken first = prev;
+
         PixelSelector retPixel = null;
         if (match(Kind.LSQUARE)){ //pixel selector
+            //System.out.println(current.getTokenString());
             retPixel = pixelSelector();
         }
         if (match(Kind.COLON)){ // Channel selector
@@ -305,6 +310,26 @@ public class Parser implements IParser{
         return retPixel;
     }
 
+    private ExpandedPixelExpr expandedPixel() throws PLCException{
+        IToken start = prev;
+        Expr x = expression();
+        if (!match(Kind.COMMA)) throw new SyntaxException("Expected ,");
+        Expr y = expression();
+        if (!match(Kind.COMMA)) throw new SyntaxException("Expected ,");
+        Expr z = expression();
+        ExpandedPixelExpr retPixel = new ExpandedPixelExpr(start,x,y,z);
+        if (match(Kind.RSQUARE)) return retPixel;
+        else throw new SyntaxException("Expected ]");
+    }
+
+    private PixelFuncExpr pixelFunc() throws PLCException{
+        IToken start = prev;
+        PixelSelector pixel = null;
+        if (match(Kind.LSQUARE)) pixel = pixelSelector();
+        else throw new SyntaxException("Expected [");
+        return new PixelFuncExpr(start,start.getKind(),pixel);
+    }
+
 
     private Expr primary() throws PLCException{               //add try block prob
         Expr expr;
@@ -326,6 +351,12 @@ public class Parser implements IParser{
             return new PredeclaredVarExpr(prev);
         else if(match(Kind.RES_r))
             return new PredeclaredVarExpr(prev);
+        else if(match(Kind.LSQUARE)){
+            expr = expandedPixel();
+        }
+        else if(match(Kind.RES_x_cart,Kind.RES_y_cart,Kind.RES_a_polar,Kind.RES_r_polar)){
+            expr = pixelFunc();
+        }
         else if(match(Kind.LPAREN)){
             expr = expression();
             if(!match(Kind.RPAREN)) throw new SyntaxException("expected right paren, )");
