@@ -60,7 +60,7 @@ public class Parser implements IParser{
             retList.add(parameter);
             if (match(Kind.RPAREN)) break;
             if (!match(Kind.COMMA)) return retList;
-
+            //throw new SyntaxException("Expected param");
         } //maybe add error to check if param list doesnt end
         return retList;
 
@@ -80,8 +80,8 @@ public class Parser implements IParser{
 
             if (!match(Kind.IDENT)) throw new SyntaxException("Expected IDENT");
             return new NameDef(firstNameDef, Type.getType(firstNameDef), dim, new Ident(prev));
-            }
-        else return null;
+        }
+        throw new SyntaxException("Expected [");
 
 
     }
