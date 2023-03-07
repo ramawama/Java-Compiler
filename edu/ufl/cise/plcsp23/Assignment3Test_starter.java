@@ -898,6 +898,653 @@ class Assignment3Test_starter {
 		});
 	}
 
-}
 
+	@Test
+	void test15() throws PLCException {
+		String input = """
+				string s(){
+				xx = 22
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test16() throws PLCException {
+		String input = """
+				int s(){
+				xx = 22;
+				}
+				""";
+		assertThrows(LexicalException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test17() throws PLCException { // NUM_LIT for program name
+		String input = """
+				int 1(){
+				xx = 22.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test18() throws PLCException { // No parentheses
+		String input = """
+				int p{
+				xx = 22.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test19() throws PLCException { // No comma separator for param list
+		String input = """
+				int p(int i int j){
+				xx = 22.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test20() throws PLCException { // No closing parenthesis
+		String input = """
+				int p(int i, int j{
+				xx = 22.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test21() throws PLCException { // NUM_LIT instead of IDENT for NameDef
+		String input = """
+				int p(int 1, int j){
+				xx = 22.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test22() throws PLCException { // No opening bracket
+		String input = """
+				int p(int i, int j) 
+				xx = 22.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test23() throws PLCException { // No closing bracket
+		String input = """
+				int p(int i, int j){
+				xx = 22.
+				
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test24() throws PLCException { // No '=' after Lvalue in statement
+		String input = """
+				int p(int i, int j){ 
+				xx[1,2] 22.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test25() throws PLCException { // Invalid color channel
+		String input = """
+				int p(int i, int j){ 
+					xx[1, 2]:yel.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test26() throws PLCException { // Invalid type
+		String input = """
+				int p(int i, int j){ 
+					wrong xx = 22.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test27() throws PLCException { // No IDENT after type + dimension
+		String input = """
+				int p(int i, int j){ 
+					image[1,2] = 22.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test28() throws PLCException { // No IDENT after type
+		String input = """
+				int p(int i, int j){ 
+					image = 22.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test29() throws PLCException { // No opening bracket in pixel selector
+		String input = """
+				int p(int i, int j){ 
+					xx1,2] = 1.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test30() throws PLCException { // No comma in pixel selector
+		String input = """
+				int p(int i, int j){ 
+					xx[1 2] = 1.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test31() throws PLCException { // No closing bracket in pixel selector
+		String input = """
+				int p(int i, int j){ 
+					xx[1, 2 = 1.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test32() throws PLCException { // No opening bracket in expanded pixel
+		String input = """
+				int p(int i, int j){ 
+					pixel p = 1, 2, 3].
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test33() throws PLCException { // No first comma in expanded pixel
+		String input = """
+				int p(int i, int j){ 
+					pixel p = [1 2, 3].
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test34() throws PLCException { // No second comma in expanded pixel
+		String input = """
+				int p(int i, int j){ 
+					pixel p = [1, 2 3].
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test35() throws PLCException { // No closing bracket in expanded pixel
+		String input = """
+				int p(int i, int j){ 
+					pixel p = [1, 2, 3.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test36() throws PLCException { // Invalid pixel function
+		String input = """
+				int p(int i, int j){ 
+					j[x,y] = k[x_cart, y_cart [a,r]].
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test37() throws PLCException { // No opening bracket in dimension
+		String input = """
+				int p(int i, int j){ 
+					image1, 2] xx.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test38() throws PLCException { // No comma in dimension
+		String input = """
+				int p(int i, int j){ 
+					image[1 2] xx.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test39() throws PLCException { // No closing bracket in dimension
+		String input = """
+				int p(int i, int j){ 
+					image[1, 2 xx.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test40() throws PLCException { // No closing bracket in dimension
+		String input = """
+				int p(int i, int j){ 
+					image[1, 2 xx.
+				}
+				""";
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void test41() throws PLCException { // Test green color channel
+		String input = """
+				void prog(){
+				image[30,40] aa = "url".
+				int xx = aa[0,0]:grn.
+				}
+				""";
+		AST ast = getAST(input);
+		assertThat("", ast, instanceOf(Program.class));
+		Program v0 = (Program) ast;
+		Ident v1 = v0.getIdent();
+		checkIdent(v1, "prog");
+		List<NameDef> v2 = v0.getParamList();
+		int v3 = v2.size();
+		assertEquals(0, v3);
+		Block v4 = v0.getBlock();
+		assertThat("", v4, instanceOf(Block.class));
+		List<Declaration> v5 = v4.getDecList();
+		int v6 = v5.size();
+		assertEquals(2, v6);
+		Declaration v7 = v5.get(0);
+		assertThat("", v7, instanceOf(Declaration.class));
+		NameDef v8 = v7.getNameDef();
+		assertThat("", v8, instanceOf(NameDef.class));
+		checkNameDef(v8, "aa", Type.IMAGE);
+		Dimension v9 = ((NameDef) v8).getDimension();
+		assertThat("", v9, instanceOf(Dimension.class));
+		Expr v10 = ((Dimension) v9).getWidth();
+		checkNumLit(v10, 30);
+		Expr v11 = ((Dimension) v9).getHeight();
+		checkNumLit(v11, 40);
+		Expr v12 = v7.getInitializer();
+		checkStringLit(v12, "url");
+		Declaration v13 = v5.get(1);
+		assertThat("", v13, instanceOf(Declaration.class));
+		NameDef v14 = v13.getNameDef();
+		assertThat("", v14, instanceOf(NameDef.class));
+		checkNameDef(v14, "xx", Type.INT);
+		assertNull(v14.getDimension());
+		Expr v15 = v13.getInitializer();
+		assertThat("", v15, instanceOf(UnaryExprPostfix.class));
+		Expr v16 = ((UnaryExprPostfix) v15).getPrimary();
+		checkIdentExpr(v16, "aa");
+		PixelSelector v17 = ((UnaryExprPostfix) v15).getPixel();
+		assertThat("", v17, instanceOf(PixelSelector.class));
+		Expr v18 = ((PixelSelector) v17).getX();
+		checkNumLit(v18, 0);
+		Expr v19 = ((PixelSelector) v17).getY();
+		checkNumLit(v19, 0);
+		assertEquals(ColorChannel.grn, ((UnaryExprPostfix) v15).getColor());
+		List<Statement> v20 = v4.getStatementList();
+		int v21 = v20.size();
+		assertEquals(0, v21);
+	}
+
+	@Test
+	void test42() throws PLCException { // Test blue color channel
+		String input = """
+				void prog(){
+				image[30,40] aa = "url".
+				int xx = aa[0,0]:blu.
+				}
+				""";
+		AST ast = getAST(input);
+		assertThat("", ast, instanceOf(Program.class));
+		Program v0 = (Program) ast;
+		Ident v1 = v0.getIdent();
+		checkIdent(v1, "prog");
+		List<NameDef> v2 = v0.getParamList();
+		int v3 = v2.size();
+		assertEquals(0, v3);
+		Block v4 = v0.getBlock();
+		assertThat("", v4, instanceOf(Block.class));
+		List<Declaration> v5 = v4.getDecList();
+		int v6 = v5.size();
+		assertEquals(2, v6);
+		Declaration v7 = v5.get(0);
+		assertThat("", v7, instanceOf(Declaration.class));
+		NameDef v8 = v7.getNameDef();
+		assertThat("", v8, instanceOf(NameDef.class));
+		checkNameDef(v8, "aa", Type.IMAGE);
+		Dimension v9 = ((NameDef) v8).getDimension();
+		assertThat("", v9, instanceOf(Dimension.class));
+		Expr v10 = ((Dimension) v9).getWidth();
+		checkNumLit(v10, 30);
+		Expr v11 = ((Dimension) v9).getHeight();
+		checkNumLit(v11, 40);
+		Expr v12 = v7.getInitializer();
+		checkStringLit(v12, "url");
+		Declaration v13 = v5.get(1);
+		assertThat("", v13, instanceOf(Declaration.class));
+		NameDef v14 = v13.getNameDef();
+		assertThat("", v14, instanceOf(NameDef.class));
+		checkNameDef(v14, "xx", Type.INT);
+		assertNull(v14.getDimension());
+		Expr v15 = v13.getInitializer();
+		assertThat("", v15, instanceOf(UnaryExprPostfix.class));
+		Expr v16 = ((UnaryExprPostfix) v15).getPrimary();
+		checkIdentExpr(v16, "aa");
+		PixelSelector v17 = ((UnaryExprPostfix) v15).getPixel();
+		assertThat("", v17, instanceOf(PixelSelector.class));
+		Expr v18 = ((PixelSelector) v17).getX();
+		checkNumLit(v18, 0);
+		Expr v19 = ((PixelSelector) v17).getY();
+		checkNumLit(v19, 0);
+		assertEquals(ColorChannel.blu, ((UnaryExprPostfix) v15).getColor());
+		List<Statement> v20 = v4.getStatementList();
+		int v21 = v20.size();
+		assertEquals(0, v21);
+	}
+
+	@Test
+	void test43() throws PLCException { // Test x, y, a, r
+		String input = """
+				void d(){
+					write x.
+					write y.
+					write a.
+					write r.
+				}
+				""";
+		AST ast = getAST(input);
+		assertThat("", ast, instanceOf(Program.class));
+		Program v0 = (Program) ast;
+		Ident v1 = v0.getIdent();
+		checkIdent(v1, "d");
+		List<NameDef> v2 = v0.getParamList();
+		int v3 = v2.size();
+		assertEquals(0, v3);
+		Block v4 = v0.getBlock();
+		assertThat("", v4, instanceOf(Block.class));
+		List<Declaration> v5 = v4.getDecList();
+		int v6 = v5.size();
+		assertEquals(0, v6);
+		List<Statement> v7 = v4.getStatementList();
+		int v8 = v7.size();
+		assertEquals(4, v8);
+
+		// write x.
+		Statement v9 = v7.get(0);
+		assertThat("", v9, instanceOf(WriteStatement.class));
+		Expr v10 = ((WriteStatement) v9).getE();
+		assertThat("", v10, instanceOf(PredeclaredVarExpr.class));
+		assertEquals(RES_x, ((PredeclaredVarExpr) v10).getKind());
+
+		// write y.
+		Statement v11 = v7.get(1);
+		assertThat("", v11, instanceOf(WriteStatement.class));
+		Expr v12 = ((WriteStatement) v11).getE();
+		assertThat("", v12, instanceOf(PredeclaredVarExpr.class));
+		assertEquals(RES_y, ((PredeclaredVarExpr) v12).getKind());
+
+		// write a.
+		Statement v13 = v7.get(2);
+		assertThat("", v13, instanceOf(WriteStatement.class));
+		Expr v14 = ((WriteStatement) v13).getE();
+		assertThat("", v14, instanceOf(PredeclaredVarExpr.class));
+		assertEquals(RES_a, ((PredeclaredVarExpr) v14).getKind());
+
+		// write r.
+		Statement v15 = v7.get(3);
+		assertThat("", v15, instanceOf(WriteStatement.class));
+		Expr v16 = ((WriteStatement) v15).getE();
+		assertThat("", v16, instanceOf(PredeclaredVarExpr.class));
+		assertEquals(RES_r, ((PredeclaredVarExpr) v16).getKind());
+	}
+
+	@Test
+	void andNoReservedIdents() throws PLCException {
+		assertTimeoutPreemptively(Duration.ofMillis(TIMEOUT_MILLIS), () -> {
+			String input = """
+					void void() {}
+					""";
+			assertThrows(SyntaxException.class, () -> {
+				@SuppressWarnings("unused")
+				AST ast = getAST(input);
+			});
+		});
+	}
+
+	@Test
+	void andNoDeclarationAfterStmt() throws PLCException {
+		assertTimeoutPreemptively(Duration.ofMillis(TIMEOUT_MILLIS), () -> {
+			String input = """
+					void program() {
+						things = stuff.
+						int things.
+					}
+					""";
+			assertThrows(SyntaxException.class, () -> {
+				@SuppressWarnings("unused")
+				AST ast = getAST(input);
+			});
+		});
+	}
+
+	@Test
+	void andANormalProgram() throws PLCException {
+		assertTimeoutPreemptively(Duration.ofMillis(TIMEOUT_MILLIS), () -> {
+			String input = """
+					void program() {
+						int things = stuff.
+					}
+					""";
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void andNestedWhileLoops() throws PLCException {
+		assertTimeoutPreemptively(Duration.ofMillis(TIMEOUT_MILLIS), () -> {
+			String input = """
+					void program() {
+						while thisIsTrue {
+							while thatNotTrue {
+								while theseAreTrue {
+									write 1.
+									write 2.
+									write 3.
+								}.
+							}.
+						}.
+					}
+					""";
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void andMissingBraces() throws PLCException {
+		assertTimeoutPreemptively(Duration.ofMillis(TIMEOUT_MILLIS), () -> {
+			String input = """
+					void program() {
+						int i = 0.
+					""";
+			assertThrows(SyntaxException.class, () -> {
+				@SuppressWarnings("unused")
+				AST ast = getAST(input);
+			});
+		});
+	}
+
+	@Test
+	void andIncorrectOrder() throws PLCException {
+		assertTimeoutPreemptively(Duration.ofMillis(TIMEOUT_MILLIS), () -> {
+			String input = """
+					void program() {
+						int i = 0.
+						write i.
+						int j = 0.
+					}
+					""";
+			assertThrows(SyntaxException.class, () -> {
+				@SuppressWarnings("unused")
+				AST ast = getAST(input);
+			});
+		});
+	}
+
+	@Test
+	void andARealWhileExpression() throws PLCException {
+		assertTimeoutPreemptively(Duration.ofMillis(TIMEOUT_MILLIS), () -> {
+			String input = """
+					void program() {
+						while ((((if a ? b ? (if c ? d ? e))))) {
+							write f.
+						}.
+					}
+					""";
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void andSomethingAfter() throws PLCException {
+		assertTimeoutPreemptively(Duration.ofMillis(TIMEOUT_MILLIS), () -> {
+			String input = """
+					void program() {
+						int i = 0.
+					} hi
+					""";
+			assertThrows(SyntaxException.class, () -> {
+				@SuppressWarnings("unused")
+				AST ast = getAST(input);
+			});
+		});
+	}
+
+	@Test
+	void meTest() throws PLCException {
+		assertTimeoutPreemptively(Duration.ofMillis(TIMEOUT_MILLIS), () -> {
+			String input = """
+					void program() {
+						int i = 0.
+					}
+					piss program() {
+						titties;
+					}
+					""";
+			assertThrows(SyntaxException.class, () -> {
+				@SuppressWarnings("unused")
+				AST ast = getAST(input);
+			});
+		});
+	}
+}
 
