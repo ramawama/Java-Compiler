@@ -2,12 +2,16 @@ package edu.ufl.cise.plcsp23;
 
 import edu.ufl.cise.plcsp23.ast.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static edu.ufl.cise.plcsp23.IToken.Kind;
 
 public class Parser implements IParser{
     private IScanner scanner;
     private IToken current;
-    private IToken prev;      //previous token
+    private IToken prev;//previous token
+    private Block block;
 
     public Parser(Scanner scanner) throws PLCException{ //consume()
         this.scanner = scanner;
@@ -24,6 +28,99 @@ public class Parser implements IParser{
             }
         }
         return false;
+    }
+
+    private Program program() throws PLCException{ //maybe change access modifier
+
+        IToken first = prev; //  set to first since match consumed
+        Type progType = Type.getType(first); // will return an error if it isnt approved type
+        Ident ident;
+        List<NameDef> paramList;
+        if(match(Kind.IDENT)){
+            ident = new Ident(prev); // create ident object if its a match
+
+        }
+        else throw new SyntaxException("expected IDENT"); // follow program grammar
+
+        if(match(Kind.LPAREN)) paramList = param(); //checking for paramlist
+        else throw new SyntaxException("Expected (");
+
+        System.out.println(current.getTokenString());
+        if (match(Kind.LCURLY)) block = block();
+        else throw new SyntaxException("Expected {");
+
+        return new Program(first, progType, ident, paramList, block);
+    }
+
+    private List<NameDef> param() throws PLCException{
+        List<NameDef> retList = new ArrayList<NameDef>();
+        while (!match(Kind.RPAREN)){ //while in parameters list
+            match(Kind.COMMA);
+            if (match(Kind.RES_image,Kind.RES_pixel, Kind.RES_int, Kind.RES_string, Kind.RES_void)){
+                //NameDef must start with type
+                NameDef parameter = nameDef();
+                retList.add(parameter);
+            }
+            else if (!match(Kind.COMMA)) return retList;
+            else throw new PLCException("Expected Type");
+        } //maybe add error to check if param list doesnt end
+        return retList;
+
+    }
+
+    private NameDef nameDef() throws PLCException{ //maybe change access modifier idk should be good for now
+        IToken firstNameDef = prev;
+        if (match(Kind.IDENT)){ //check for first type of parameters 'type IDENT'
+//            System.out.println(firstNameDef.getTokenString());
+//            System.out.println(current.getTokenString());
+            if (match(Kind.LSQUARE)){ //means dimension
+                Dimension dim = dimension();
+                //System.out.println("Bad");
+                return new NameDef(firstNameDef, Type.getType(firstNameDef), dim, new Ident(prev));
+            }
+            else {
+                //System.out.println(current.getTokenString());
+                return new NameDef(firstNameDef,Type.getType(firstNameDef),null,new Ident(prev));
+            }
+
+            //return new NameDef(prev,Type.getType(prev),)
+        }
+        return null;
+    }
+
+    private Dimension dimension() throws PLCException{
+        Expr width = expression();
+        Expr height = null;
+        if(match(Kind.COMMA)) {
+            height = expression();
+        }
+        else throw new PLCException("Expected ,");
+        if(match(Kind.RSQUARE)){
+            return new Dimension(prev,width,height);
+        }
+        return null;
+    }
+
+    private Block block() throws PLCException{
+        IToken firstBlock = prev; //should be left curly??
+
+        List<Declaration> decList = declarationList();
+        List<Statement> statList = statementList();
+        return new Block(firstBlock, decList, statList);
+    }
+
+    private List<Declaration> declarationList() throws PLCException{
+        List<Declaration> ret = new ArrayList<Declaration>();
+//        NameDef firstNameDef = nameDef();
+//        while (nameDef() != null){
+//
+//        }
+        return ret;
+    }
+
+    private List<Statement> statementList() throws PLCException{
+        List<Statement> ret = new ArrayList<Statement>();
+        return ret;
     }
 
     private Expr expression() throws PLCException{
@@ -158,7 +255,12 @@ public class Parser implements IParser{
             throw new SyntaxException("Empty program");
         }
         while (current.getKind() != Kind.EOF){
-            if(match(Kind.RES_if)){
+            if (match(Kind.RES_image,Kind.RES_pixel, Kind.RES_int, Kind.RES_string, Kind.RES_void)){
+
+                ret = program();
+                return ret;
+            }
+            else if(match(Kind.RES_if)){
                 ret = conditional();
             }else{
                 ret = expression();

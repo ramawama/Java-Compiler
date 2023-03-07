@@ -82,6 +82,9 @@ public class Scanner implements IScanner{
         reservedWrds.put("load", Kind.RES_load);
         reservedWrds.put("display", Kind.RES_display);
         reservedWrds.put("write", Kind.RES_write);
+        reservedWrds.put("red", Kind.RES_red);
+        reservedWrds.put("grn", Kind.RES_grn);
+        reservedWrds.put("blu", Kind.RES_blu);
     }
 
     //Where all logic for parsing is

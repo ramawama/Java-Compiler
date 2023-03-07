@@ -19,4 +19,10 @@ public class CompilerComponentFactory {
 		Scanner scanner = new Scanner(input);
 		return new Parser(scanner);
 	}
+
+	public static IParser makeParser(String input) throws PLCException {
+		Scanner scanner = new Scanner(input);
+		return new Parser(scanner);
+	}
 }
+
