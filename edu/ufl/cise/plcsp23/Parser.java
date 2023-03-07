@@ -22,6 +22,7 @@ public class Parser implements IParser{
     protected boolean match(Kind... kinds) throws PLCException{
         for(Kind k: kinds){
             if(k == current.getKind()) {
+                //System.out.println(current.getTokenString());
                 prev = current;
                 current = scanner.next();          // "consume()"
                 return true;
@@ -45,9 +46,9 @@ public class Parser implements IParser{
         if(match(Kind.LPAREN)) paramList = param(); //checking for paramlist
         else throw new SyntaxException("Expected (");
 
-        System.out.println(current.getTokenString());
-        if (match(Kind.LCURLY)) block = block();
-        else throw new SyntaxException("Expected {");
+
+        //System.out.println(current.getTokenString());
+        block = block();
 
         return new Program(first, progType, ident, paramList, block);
     }
@@ -56,54 +57,54 @@ public class Parser implements IParser{
         List<NameDef> retList = new ArrayList<NameDef>();
         while (!match(Kind.RPAREN)){ //while in parameters list
             match(Kind.COMMA);
-            if (match(Kind.RES_image,Kind.RES_pixel, Kind.RES_int, Kind.RES_string, Kind.RES_void)){
-                //NameDef must start with type
-                NameDef parameter = nameDef();
-                retList.add(parameter);
-            }
-            else if (!match(Kind.COMMA)) return retList;
-            else throw new PLCException("Expected Type");
+
+            NameDef parameter = nameDef();
+            retList.add(parameter);
+            if (match(Kind.RPAREN)) break;
+            if (!match(Kind.COMMA)) return retList;
+
         } //maybe add error to check if param list doesnt end
         return retList;
 
     }
 
     private NameDef nameDef() throws PLCException{ //maybe change access modifier idk should be good for now
-        IToken firstNameDef = prev;
-        if (match(Kind.IDENT)){ //check for first type of parameters 'type IDENT'
-//            System.out.println(firstNameDef.getTokenString());
-//            System.out.println(current.getTokenString());
-            if (match(Kind.LSQUARE)){ //means dimension
-                Dimension dim = dimension();
-                //System.out.println("Bad");
-                return new NameDef(firstNameDef, Type.getType(firstNameDef), dim, new Ident(prev));
-            }
-            else {
-                //System.out.println(current.getTokenString());
-                return new NameDef(firstNameDef,Type.getType(firstNameDef),null,new Ident(prev));
-            }
+        IToken firstNameDef = null;
+        if (match(Kind.RES_image,Kind.RES_pixel, Kind.RES_int, Kind.RES_string, Kind.RES_void))
+            firstNameDef = prev; //NameDef must start with type
+        else throw new SyntaxException("Expected Type");
 
-            //return new NameDef(prev,Type.getType(prev),)
+        if (match(Kind.IDENT)) { //check for first type of parameters 'type IDENT'
+            return new NameDef(firstNameDef, Type.getType(firstNameDef), null, new Ident(prev));
         }
-        return null;
+        else if (match(Kind.LSQUARE)){ //means dimension
+            Dimension dim = dimension();
+
+            if (!match(Kind.IDENT)) throw new SyntaxException("Expected IDENT");
+            return new NameDef(firstNameDef, Type.getType(firstNameDef), dim, new Ident(prev));
+            }
+        else return null;
+
+
     }
 
     private Dimension dimension() throws PLCException{
+        IToken first = prev; //should it start at bracket??
         Expr width = expression();
         Expr height = null;
         if(match(Kind.COMMA)) {
             height = expression();
         }
-        else throw new PLCException("Expected ,");
+        else throw new SyntaxException("Expected ,");
         if(match(Kind.RSQUARE)){
-            return new Dimension(prev,width,height);
+            return new Dimension(first,width,height);
         }
         return null;
     }
 
     private Block block() throws PLCException{
+        if (!match(Kind.LCURLY)) throw new SyntaxException("Expected {");
         IToken firstBlock = prev; //should be left curly??
-
         List<Declaration> decList = declarationList();
         List<Statement> statList = statementList();
         return new Block(firstBlock, decList, statList);
@@ -111,19 +112,72 @@ public class Parser implements IParser{
 
     private List<Declaration> declarationList() throws PLCException{
         List<Declaration> ret = new ArrayList<Declaration>();
-//        NameDef firstNameDef = nameDef();
-//        while (nameDef() != null){
-//
-//        }
+        NameDef retName = null;
+        boolean inDec = true;
+        IToken first;
+        while (inDec){
+            if (current.getKind() == Kind.RES_while || current.getKind() == Kind.RES_write || current.getKind() == Kind.IDENT || current.getKind() == Kind.RCURLY)
+                break; //must be end or statement
+            first = current;
+
+            retName = nameDef();
+            if(match(Kind.ASSIGN)) {
+                Expr decExpr = expression();
+                ret.add(new Declaration(first, retName, decExpr));
+            }
+            else ret.add(new Declaration(first, retName, null));
+            match(Kind.DOT);
+        }
         return ret;
     }
 
     private List<Statement> statementList() throws PLCException{
         List<Statement> ret = new ArrayList<Statement>();
+        IToken first = current; // should be while/write/ident
+        Expr retExpr;
+        Block retBlock;
+        while (match(Kind.RES_while,Kind.RES_write,Kind.IDENT)){
+            switch (first.getKind()){
+                case IDENT -> {
+                    LValue retL = lValue();
+                    retExpr = expression();
+                    ret.add(new AssignmentStatement(first,retL,retExpr));
+                }
+                case RES_write -> {
+                    //System.out.println(current.getTokenString());
+                    retExpr = expression();
+                    ret.add(new WriteStatement(first,retExpr));
+
+                }
+                case RES_while -> {
+                    retExpr = expression();
+                    retBlock = block();
+                    ret.add(new WhileStatement(first,retExpr,retBlock));
+
+                }
+                default -> throw new SyntaxException("Expected statement");
+            }
+            if(!match(Kind.DOT)) throw new SyntaxException("Expected .");
+            if(match(Kind.RCURLY)) break;
+        }
+
         return ret;
     }
 
+    private LValue lValue() throws PLCException{
+        IToken first = current;
+        PixelSelector retPixel = null;
+        if (match(Kind.LSQUARE)){ //pixel selector
+            retPixel = pixelSelector();
+        }
+        if (match(Kind.COLON)){ // Channel selector
+            return new LValue(first, new Ident(first), retPixel, ColorChannel.getColor(current));
+        }
+        return new LValue(first, new Ident(first), retPixel, null);
+    }
+
     private Expr expression() throws PLCException{
+
         //try{
         if(match(Kind.RES_if)) return conditional();
 
@@ -223,8 +277,34 @@ public class Parser implements IParser{
             Expr right = unary();
             return new UnaryExpr(op, op.getKind(), right);
         }
-        return primary();
+        return unaryPostExpr();
     }
+
+    private Expr unaryPostExpr() throws PLCException{
+        IToken start = current;
+        Expr currentPrim = primary();
+        PixelSelector retPixel = null;
+        if(match(Kind.LSQUARE)) retPixel = pixelSelector(); //pixel select0r
+        if(match(Kind.COLON)){ // Channel selector
+            if(match(Kind.RES_red,Kind.RES_blu,Kind.RES_grn)){
+                return new UnaryExprPostfix(start, currentPrim,retPixel, ColorChannel.getColor(prev));
+            }
+            else throw new SyntaxException("Expected color");
+        }
+        if (retPixel == null) return currentPrim;
+        else return new UnaryExprPostfix(start, currentPrim, retPixel, null);
+    }
+
+    private PixelSelector pixelSelector() throws PLCException{
+        IToken start = prev;
+        Expr x = expression();
+        if (!match(Kind.COMMA)) throw new SyntaxException("Expected ,");
+        Expr y = expression();
+        PixelSelector retPixel = new PixelSelector(start,x,y);
+        match(Kind.RSQUARE);
+        return retPixel;
+    }
+
 
     private Expr primary() throws PLCException{               //add try block prob
         Expr expr;
@@ -238,6 +318,14 @@ public class Parser implements IParser{
             return new ZExpr(prev);
         else if(match(Kind.RES_rand))
             return new RandomExpr(prev);
+        else if(match(Kind.RES_x))
+            return new PredeclaredVarExpr(prev);
+        else if(match(Kind.RES_y))
+            return new PredeclaredVarExpr(prev);
+        else if(match(Kind.RES_a))
+            return new PredeclaredVarExpr(prev);
+        else if(match(Kind.RES_r))
+            return new PredeclaredVarExpr(prev);
         else if(match(Kind.LPAREN)){
             expr = expression();
             if(!match(Kind.RPAREN)) throw new SyntaxException("expected right paren, )");
