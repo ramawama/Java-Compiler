@@ -45,11 +45,12 @@ public class Parser implements IParser{
 
         if(match(Kind.LPAREN)) paramList = param(); //checking for paramlist
         else throw new SyntaxException("Expected (");
+        if(prev.getKind() != Kind.RPAREN) throw new SyntaxException("Expected )");
 
 
         //System.out.println(current.getTokenString());
         block = block();
-
+        if(current.getKind() != Kind.EOF) throw new SyntaxException("Illegal continuation");
         return new Program(first, progType, ident, paramList, block);
     }
 
@@ -99,7 +100,7 @@ public class Parser implements IParser{
         if(match(Kind.RSQUARE)){
             return new Dimension(first,width,height);
         }
-        return null;
+        else throw new SyntaxException("Expected ]");
     }
 
     private Block block() throws PLCException{
@@ -107,6 +108,7 @@ public class Parser implements IParser{
         IToken firstBlock = prev; //should be left curly??
         List<Declaration> decList = declarationList();
         List<Statement> statList = statementList();
+        if(prev.getKind() != Kind.RCURLY) throw new SyntaxException("Expected }");
         return new Block(firstBlock, decList, statList);
     }
 
@@ -159,11 +161,15 @@ public class Parser implements IParser{
                 }
                 default -> throw new SyntaxException("Expected statement");
             }
-            if(match(Kind.RCURLY)) break;
+
+            if(match(Kind.RCURLY)){
+                System.out.println("here");
+                break;
+            }
             if(!match(Kind.DOT)) throw new SyntaxException("Expected .");
 
         }
-
+        if(current.getKind() == Kind.RCURLY) match(Kind.RCURLY);
         return ret;
     }
 
@@ -176,6 +182,8 @@ public class Parser implements IParser{
             retPixel = pixelSelector();
         }
         if (match(Kind.COLON)){ // Channel selector
+            if(current.getKind() != Kind.RES_blu || current.getKind() != Kind.RES_red ||current.getKind() != Kind.RES_grn) throw new SyntaxException("Invalid color");
+
             return new LValue(first, new Ident(first), retPixel, ColorChannel.getColor(current));
         }
         return new LValue(first, new Ident(first), retPixel, null);
@@ -375,10 +383,12 @@ public class Parser implements IParser{
         }
         while (current.getKind() != Kind.EOF){
             if (match(Kind.RES_image,Kind.RES_pixel, Kind.RES_int, Kind.RES_string, Kind.RES_void)){
-
                 ret = program();
+                //if(scanner.next().getKind() != Kind.EOF) throw new SyntaxException("abd");
                 return ret;
             }
+
+
             else if(match(Kind.RES_if)){
                 ret = conditional();
             }else{

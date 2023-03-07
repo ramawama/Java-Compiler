@@ -1,54 +1,16 @@
 package edu.ufl.cise.plcsp23;
 
-import static edu.ufl.cise.plcsp23.IToken.Kind.RES_a;
-import static edu.ufl.cise.plcsp23.IToken.Kind.RES_a_polar;
-import static edu.ufl.cise.plcsp23.IToken.Kind.RES_r;
-import static edu.ufl.cise.plcsp23.IToken.Kind.RES_r_polar;
-import static edu.ufl.cise.plcsp23.IToken.Kind.RES_x;
-import static edu.ufl.cise.plcsp23.IToken.Kind.RES_x_cart;
-import static edu.ufl.cise.plcsp23.IToken.Kind.RES_y;
-import static edu.ufl.cise.plcsp23.IToken.Kind.RES_y_cart;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+import edu.ufl.cise.plcsp23.IToken.Kind;
+import edu.ufl.cise.plcsp23.ast.*;
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.List;
 
-import org.junit.jupiter.api.Test;
-
-import edu.ufl.cise.plcsp23.IToken.Kind;
-import edu.ufl.cise.plcsp23.ast.AST;
-import edu.ufl.cise.plcsp23.ast.AssignmentStatement;
-import edu.ufl.cise.plcsp23.ast.BinaryExpr;
-import edu.ufl.cise.plcsp23.ast.Block;
-import edu.ufl.cise.plcsp23.ast.ColorChannel;
-import edu.ufl.cise.plcsp23.ast.ConditionalExpr;
-import edu.ufl.cise.plcsp23.ast.Declaration;
-import edu.ufl.cise.plcsp23.ast.Dimension;
-import edu.ufl.cise.plcsp23.ast.ExpandedPixelExpr;
-import edu.ufl.cise.plcsp23.ast.Expr;
-import edu.ufl.cise.plcsp23.ast.Ident;
-import edu.ufl.cise.plcsp23.ast.IdentExpr;
-import edu.ufl.cise.plcsp23.ast.LValue;
-import edu.ufl.cise.plcsp23.ast.NameDef;
-import edu.ufl.cise.plcsp23.ast.NumLitExpr;
-import edu.ufl.cise.plcsp23.ast.PixelFuncExpr;
-import edu.ufl.cise.plcsp23.ast.PixelSelector;
-import edu.ufl.cise.plcsp23.ast.PredeclaredVarExpr;
-import edu.ufl.cise.plcsp23.ast.Program;
-import edu.ufl.cise.plcsp23.ast.RandomExpr;
-import edu.ufl.cise.plcsp23.ast.Statement;
-import edu.ufl.cise.plcsp23.ast.StringLitExpr;
-import edu.ufl.cise.plcsp23.ast.Type;
-import edu.ufl.cise.plcsp23.ast.UnaryExpr;
-import edu.ufl.cise.plcsp23.ast.UnaryExprPostfix;
-import edu.ufl.cise.plcsp23.ast.WhileStatement;
-import edu.ufl.cise.plcsp23.ast.WriteStatement;
-import edu.ufl.cise.plcsp23.ast.ZExpr;
+import static edu.ufl.cise.plcsp23.IToken.Kind.*;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 class Assignment3Test_starter {
 	static final int TIMEOUT_MILLIS = 1000;
@@ -937,3 +899,5 @@ class Assignment3Test_starter {
 	}
 
 }
+
+
