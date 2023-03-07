@@ -21,7 +21,6 @@ public class Parser implements IParser{
     protected boolean match(Kind... kinds) throws PLCException{
         for(Kind k: kinds){
             if(k == current.getKind()) {
-                //System.out.println(current.getTokenString());
                 prev = current;
                 current = scanner.next();          // "consume()"
                 return true;
@@ -47,8 +46,6 @@ public class Parser implements IParser{
         else throw new SyntaxException("Expected (");
         if(prev.getKind() != Kind.RPAREN) throw new SyntaxException("Expected )");
 
-
-        //System.out.println(current.getTokenString());
         block = block();
         if(current.getKind() != Kind.EOF) throw new SyntaxException("Illegal continuation");
         return new Program(first, progType, ident, paramList, block);
@@ -145,11 +142,12 @@ public class Parser implements IParser{
                     if (match(Kind.ASSIGN)){
                         retExpr = expression();
                         ret.add(new AssignmentStatement(first,retL,retExpr));
+                        if(current.getKind() != Kind.DOT) throw new SyntaxException("Expected .");
                     }
                     else throw new SyntaxException("Expected =");
                 }
                 case RES_write -> {
-                    //System.out.println(current.getTokenString());
+
                     retExpr = expression();
                     ret.add(new WriteStatement(first,retExpr));
 
@@ -163,12 +161,12 @@ public class Parser implements IParser{
             }
 
             if(match(Kind.RCURLY)){
-                System.out.println("here");
                 break;
             }
             if(!match(Kind.DOT)) throw new SyntaxException("Expected .");
 
         }
+
         if(current.getKind() == Kind.RCURLY) match(Kind.RCURLY);
         return ret;
     }
@@ -178,7 +176,7 @@ public class Parser implements IParser{
 
         PixelSelector retPixel = null;
         if (match(Kind.LSQUARE)){ //pixel selector
-            //System.out.println(current.getTokenString());
+
             retPixel = pixelSelector();
         }
         if (match(Kind.COLON)){ // Channel selector
