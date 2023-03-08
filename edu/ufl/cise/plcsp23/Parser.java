@@ -60,7 +60,6 @@ public class Parser implements IParser{
             retList.add(parameter);
             if (match(Kind.RPAREN)) break;
             if (!match(Kind.COMMA)) return retList;
-            //throw new SyntaxException("Expected param");
         } //maybe add error to check if param list doesnt end
         return retList;
 
@@ -80,10 +79,9 @@ public class Parser implements IParser{
 
             if (!match(Kind.IDENT)) throw new SyntaxException("Expected IDENT");
             return new NameDef(firstNameDef, Type.getType(firstNameDef), dim, new Ident(prev));
+
         }
         throw new SyntaxException("Expected [");
-
-
     }
 
     private Dimension dimension() throws PLCException{
@@ -96,8 +94,9 @@ public class Parser implements IParser{
         else throw new SyntaxException("Expected ,");
         if(match(Kind.RSQUARE)){
             return new Dimension(first,width,height);
-        }
-        else throw new SyntaxException("Expected ]");
+        }//else {
+            throw new SyntaxException("Expected ]");
+        //}
     }
 
     private Block block() throws PLCException{
@@ -312,7 +311,9 @@ public class Parser implements IParser{
         if (!match(Kind.COMMA)) throw new SyntaxException("Expected ,");
         Expr y = expression();
         PixelSelector retPixel = new PixelSelector(start,x,y);
-        match(Kind.RSQUARE);
+        if(!match(Kind.RSQUARE)){
+            throw new SyntaxException("Excpected ]");
+        }
         return retPixel;
     }
 
