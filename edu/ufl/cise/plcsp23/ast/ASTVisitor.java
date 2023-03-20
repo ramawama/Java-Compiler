@@ -38,15 +38,17 @@ public interface ASTVisitor {
 
 	Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCException;
 
-	Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws PLCException;
-
 	Object visitPixelFuncExpr(PixelFuncExpr pixelFuncExpr, Object arg) throws PLCException;
+
+	Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws PLCException;
 
 	Object visitPredeclaredVarExpr(PredeclaredVarExpr predeclaredVarExpr, Object arg) throws PLCException;
 
 	Object visitProgram(Program program, Object arg) throws PLCException;
 
 	Object visitRandomExpr(RandomExpr randomExpr, Object arg) throws PLCException;
+
+	Object visitReturnStatement(ReturnStatement returnStatement, Object arg)throws PLCException;
 
 	Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws PLCException;
 
@@ -59,7 +61,5 @@ public interface ASTVisitor {
 	Object visitWriteStatement(WriteStatement statementWrite, Object arg) throws PLCException;
 
 	Object visitZExpr(ZExpr zExpr, Object arg) throws PLCException;
-
-
 
 }

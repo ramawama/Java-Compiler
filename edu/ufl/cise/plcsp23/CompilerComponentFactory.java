@@ -10,6 +10,10 @@
 
 package edu.ufl.cise.plcsp23;
 
+
+import edu.ufl.cise.plcsp23.ast.ASTVisitor;
+import edu.ufl.cise.plcsp23.ast.AVisit;
+
 public class CompilerComponentFactory {
 	public static IScanner makeScanner(String input) {
 		return new Scanner(input);  //instance of scanner
@@ -23,6 +27,10 @@ public class CompilerComponentFactory {
 	public static IParser makeParser(String input) throws PLCException {
 		Scanner scanner = new Scanner(input);
 		return new Parser(scanner);
+	}
+	public static ASTVisitor makeTypeChecker() {
+		AVisit visitor = new AVisit();
+		return visitor; //not sure if this is correct
 	}
 }
 
