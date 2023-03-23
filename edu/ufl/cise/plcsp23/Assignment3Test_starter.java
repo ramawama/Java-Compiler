@@ -1546,5 +1546,17 @@ class Assignment3Test_starter {
 			});
 		});
 	}
+	@Test
+	void testFail() throws PLCException {
+		assertTimeoutPreemptively(Duration.ofMillis(TIMEOUT_MILLIS), () -> {
+			String input = """
+                    int s(,int i){}
+                    """;
+			assertThrows(SyntaxException.class, () -> {
+				@SuppressWarnings("unused")
+				AST ast = getAST(input);
+			});
+		});
+	}
 }
 

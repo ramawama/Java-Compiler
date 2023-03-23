@@ -41,7 +41,6 @@ public class Parser implements IParser{
 
         }
         else throw new SyntaxException("expected IDENT"); // follow program grammar
-
         if(match(Kind.LPAREN)) paramList = param(); //checking for paramlist
         else throw new SyntaxException("Expected (");
         if(prev.getKind() != Kind.RPAREN) throw new SyntaxException("Expected )");
@@ -53,16 +52,15 @@ public class Parser implements IParser{
 
     private List<NameDef> param() throws PLCException{
         List<NameDef> retList = new ArrayList<NameDef>();
+        if (match(Kind.COMMA)) throw new SyntaxException("Unexpected comma");
         while (!match(Kind.RPAREN)){ //while in parameters list
             match(Kind.COMMA);
-
             NameDef parameter = nameDef();
             retList.add(parameter);
             if (match(Kind.RPAREN)) break;
             if (!match(Kind.COMMA)) return retList;
         } //maybe add error to check if param list doesnt end
         return retList;
-
     }
 
     private NameDef nameDef() throws PLCException{ //maybe change access modifier idk should be good for now
@@ -134,7 +132,7 @@ public class Parser implements IParser{
         IToken first = current; // should be while/write/ident
         Expr retExpr;
         Block retBlock;
-        while (match(Kind.RES_while,Kind.RES_write,Kind.IDENT)){
+        while (match(Kind.RES_while,Kind.RES_write,Kind.IDENT,Kind.COLON)){
             switch (first.getKind()){
                 case IDENT -> {
                     LValue retL = lValue();
@@ -155,6 +153,10 @@ public class Parser implements IParser{
                     retExpr = expression();
                     retBlock = block();
                     ret.add(new WhileStatement(first,retExpr,retBlock));
+                }
+                case COLON -> {
+                    retExpr = expression();
+                    ret.add(new ReturnStatement(first,retExpr));
                 }
                 default -> throw new SyntaxException("Expected statement");
             }

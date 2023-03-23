@@ -6,6 +6,7 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws PLCException {
+
         return null;
     }
 
@@ -116,6 +117,11 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitRandomExpr(RandomExpr randomExpr, Object arg) throws PLCException {
+        return null;
+    }
+
+    @Override
+    public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCException {
         return null;
     }
 }
