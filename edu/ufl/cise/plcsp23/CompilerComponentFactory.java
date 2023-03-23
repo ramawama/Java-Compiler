@@ -11,8 +11,8 @@
 package edu.ufl.cise.plcsp23;
 
 
+import edu.ufl.cise.plcsp23.ast.ASTVisit;
 import edu.ufl.cise.plcsp23.ast.ASTVisitor;
-import edu.ufl.cise.plcsp23.ast.AVisit;
 
 public class CompilerComponentFactory {
 	public static IScanner makeScanner(String input) {
@@ -29,7 +29,7 @@ public class CompilerComponentFactory {
 		return new Parser(scanner);
 	}
 	public static ASTVisitor makeTypeChecker() {
-		AVisit visitor = new AVisit();
+		ASTVisitor visitor = new ASTVisit();
 		return visitor; //not sure if this is correct
 	}
 }
