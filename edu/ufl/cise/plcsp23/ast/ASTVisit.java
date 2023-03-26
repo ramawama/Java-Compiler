@@ -1,26 +1,21 @@
 package edu.ufl.cise.plcsp23.ast;
 
-import edu.ufl.cise.plcsp23.IToken;
 import edu.ufl.cise.plcsp23.PLCException;
-import edu.ufl.cise.plcsp23.Token;
 import edu.ufl.cise.plcsp23.TypeCheckException;
 
 import java.util.HashMap;
-import java.util.List;
-
-import static edu.ufl.cise.plcsp23.IToken.Kind.*;
 
 
 public class ASTVisit implements ASTVisitor{
 
     public static class SymbolTable {
-        HashMap<String, Declaration> entries = new HashMap<>();
+        HashMap<String, NameDef> entries = new HashMap<>(); //changed to namedef
 
-        public boolean insert(String name, Declaration declaration){
-            return (entries.putIfAbsent(name, declaration)==null);
+        public boolean insert(String name, NameDef namedef){
+            return (entries.putIfAbsent(name, namedef)==null);
         }
 
-        public Declaration lookup(String name) {
+        public NameDef lookup(String name) {
             return entries.get(name);
         }
     }
@@ -28,7 +23,7 @@ public class ASTVisit implements ASTVisitor{
     SymbolTable symbolTable = new SymbolTable();
 
     private void check(boolean cond, String message) throws TypeCheckException {
-        if(!cond) {throw new TypeCheckException(message);}
+        if(cond) {throw new TypeCheckException(message);} //if true means error/exception
     }
 
     private boolean compatible(Type target, Type rhs){
@@ -44,13 +39,14 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws PLCException {
+
         return null;
     }
 
     @Override
-    public Object visitDeclaration(Declaration declaration, Object arg) throws PLCException {
+    public Object visitDeclaration(Declaration declaration, Object arg) throws PLCException { //fix check!! - R
         String name = declaration.getNameDef().toString();
-        boolean inserted = symbolTable.insert(name, declaration);
+        boolean inserted = symbolTable.insert(name, declaration.getNameDef());
         check(inserted, "variable " + name + " already declared");
         Expr init = declaration.getInitializer();;
         if(init != null){
@@ -63,6 +59,11 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitDimension(Dimension dimension, Object arg) throws PLCException {
+        Expr expr1 = dimension.getWidth();
+        Expr expr2 = dimension.getHeight();
+        check(expr1.getType().equals(Type.INT),"Type should be int");
+        check(expr2.getType().equals(Type.INT),"Type should be int");
+
         return null;
     }
 
@@ -83,51 +84,7 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCException {
-        Object right = binaryExpr.right.visit(this, arg);
-        Object left = binaryExpr.left.visit(this, arg);
-        Type result = null;
-
-        switch(binaryExpr.op){
-            case PLUS -> {
-                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
-                else if (left == Type.STRING && right == Type.STRING) {result = Type.STRING;}
-                else if(left == Type.PIXEL && right == Type.PIXEL) {result = Type.PIXEL;}
-                else if(left == Type.IMAGE && right == Type.IMAGE) {result = Type.IMAGE;}
-                else {check(false, "incompatible types");}
-            }
-            case MINUS -> {
-                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
-                else if(left == Type.PIXEL && right == Type.PIXEL) {result = Type.PIXEL;}
-                else if(left == Type.IMAGE && right == Type.IMAGE) {result = Type.IMAGE;}
-                else{check(false, "incompatible types");}
-            }
-            case TIMES,DIV,MOD -> {
-                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
-                else if(left == Type.PIXEL && right == Type.PIXEL) {result = Type.PIXEL;}
-                else if(left == Type.IMAGE && right == Type.IMAGE) {result = Type.IMAGE;}
-                else if(left == Type.PIXEL && right == Type.INT) {result = Type.PIXEL;}
-                else if(left == Type.IMAGE && right == Type.INT) {result = Type.IMAGE;}
-                else {check(false, "incompatiblel types");}
-            }
-            case EXP -> {
-                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
-                else if(left == Type.PIXEL && right == Type.INT) {result = Type.PIXEL;}
-                else {check(false, "incompatiblel types");}
-            }
-            case LT, GT, LE, GE, OR, AND -> {
-                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
-                else {check(false, "incompatible types");}
-            }
-            case BITOR, BITAND -> {
-                if(left == Type.PIXEL && right == Type.PIXEL) {result = Type.PIXEL;}
-                else {check(false, "incompatible types");}
-            }
-            default ->{
-                throw new PLCException("compiler error");
-            }
-        }
-        binaryExpr.setType(result);
-        return result;
+        return null;
     }
 
     @Override
@@ -157,14 +114,12 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws PLCException {
-        stringLitExpr.setType(Type.STRING);
-        return Type.STRING;  //or getValue?
+        return null;
     }
 
     @Override
     public Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCException {
-        numLitExpr.setType(Type.INT);
-        return Type.INT;
+        return null;
     }
 
     @Override
@@ -179,30 +134,28 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitPredeclaredVarExpr(PredeclaredVarExpr predeclaredVarExpr, Object arg) throws PLCException {
-        return predeclaredVarExpr.getType();
+        return null;
     }
 
     @Override
     public Object visitProgram(Program program, Object arg) throws PLCException {
-        //Object ident = program.ident.visit(this,null);
-        List<NameDef> paramList = program.getParamList();
-        //Object block = program.block.visit(this, null);
-        for(NameDef node : paramList) {
-            node.visit(this,arg);
+        for (int i = 0; i < program.getParamList().size(); i++){ //visits namedef
+            visitNameDef(program.getParamList().get(i),arg);
         }
-        return program;
+        return null;
     }
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCException {
-        String name = identExpr.getName();
-        Declaration dec = symbolTable.lookup(name);
-        check(dec != null, "unidentified ident" + name);
-        check(dec.initialized, "using uninitialized variable");
-        //save declaration?
-        Type type = dec.getNameDef().getType();
-        identExpr.setType(type);
-        return type;
+//        String name = identExpr.getName();
+//        Declaration dec = symbolTable.lookup(name);
+//        check(dec != null, "unidentified ident" + name);
+//        check(dec.initialized, "using uninitialized variable");
+//        //save declaration?
+//        Type type = dec.getNameDef().getType();
+//        identExpr.setType(type);
+//        return type;
+        return null;
     }
 
     @Override
@@ -212,17 +165,25 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCException {
+        System.out.println(nameDef.getIdent().getName());
+        check(nameDef.getType().equals(Type.VOID),"Type cannot be void");
+        if (nameDef.getDimension() != null){
+            check(nameDef.getType().equals(Type.IMAGE),"Type must equal image if dimension is declared");
+            visitDimension(nameDef.getDimension(),arg);
+        }
+        check(!symbolTable.insert(nameDef.getIdent().getName(),nameDef), "Name already initialized");
+            //if false already present
         return null;
     }
 
     @Override
     public Object visitZExpr(ZExpr constExpr, Object arg) throws PLCException {
-        return constExpr.getType();
+        return null;
     }
 
     @Override
     public Object visitRandomExpr(RandomExpr randomExpr, Object arg) throws PLCException {
-        return randomExpr.getType();
+        return null;
     }
 
     @Override
