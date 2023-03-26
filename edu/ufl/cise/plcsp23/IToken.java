@@ -82,7 +82,6 @@ public interface IToken {
 		RES_blu
 	}
 
-
 	/**
 	 * Returns a SourceLocation record containing the line and column number of this token.
 	 * Both counts start numbering at 1.

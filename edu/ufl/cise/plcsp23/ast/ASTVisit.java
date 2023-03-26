@@ -1,12 +1,39 @@
 package edu.ufl.cise.plcsp23.ast;
 
+import edu.ufl.cise.plcsp23.IToken;
 import edu.ufl.cise.plcsp23.PLCException;
+import edu.ufl.cise.plcsp23.Token;
+import edu.ufl.cise.plcsp23.TypeCheckException;
+
+import java.util.HashMap;
+import java.util.List;
+
+import static edu.ufl.cise.plcsp23.IToken.Kind.*;
+
 
 public class ASTVisit implements ASTVisitor{
 
+    public static class SymbolTable {
+        HashMap<String, Declaration> entries = new HashMap<>();
+
+        public boolean insert(String name, Declaration declaration){
+            return (entries.putIfAbsent(name, declaration)==null);
+        }
+
+        public Declaration lookup(String name) {
+            return entries.get(name);
+        }
+    }
+
+    SymbolTable symbolTable = new SymbolTable();
+
+    private void check(boolean cond, String message) throws TypeCheckException {
+        if(!cond) {throw new TypeCheckException(message);}
+
+    }
+
     @Override
     public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws PLCException {
-
         return null;
     }
 
@@ -27,7 +54,14 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitIdent(Ident ident, Object arg) throws PLCException {
-        return null;
+        String name = ident.getName();
+        Declaration dec = symbolTable.lookup(name);
+        check(dec != null, "unidentified ident" + name);
+        check(dec.initialized, "using uninitialized variable");
+        ident.setDef(dec.nameDef); //save declaration
+        Type type = dec.getNameDef().getType();
+        //set ident type??
+        return type;
     }
 
     @Override
@@ -37,7 +71,51 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCException {
-        return null;
+        Object right = binaryExpr.right.visit(this, arg);
+        Object left = binaryExpr.left.visit(this, arg);
+        Type result = null;
+
+        switch(binaryExpr.op){
+            case PLUS -> {
+                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
+                else if (left == Type.STRING && right == Type.STRING) {result = Type.STRING;}
+                else if(left == Type.PIXEL && right == Type.PIXEL) {result = Type.PIXEL;}
+                else if(left == Type.IMAGE && right == Type.IMAGE) {result = Type.IMAGE;}
+                else {check(false, "incompatible types");}
+            }
+            case MINUS -> {
+                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
+                else if(left == Type.PIXEL && right == Type.PIXEL) {result = Type.PIXEL;}
+                else if(left == Type.IMAGE && right == Type.IMAGE) {result = Type.IMAGE;}
+                else{check(false, "incompatible types");}
+            }
+            case TIMES,DIV,MOD -> {
+                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
+                else if(left == Type.PIXEL && right == Type.PIXEL) {result = Type.PIXEL;}
+                else if(left == Type.IMAGE && right == Type.IMAGE) {result = Type.IMAGE;}
+                else if(left == Type.PIXEL && right == Type.INT) {result = Type.PIXEL;}
+                else if(left == Type.IMAGE && right == Type.INT) {result = Type.IMAGE;}
+                else {check(false, "incompatiblel types");}
+            }
+            case EXP -> {
+                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
+                else if(left == Type.PIXEL && right == Type.INT) {result = Type.PIXEL;}
+                else {check(false, "incompatiblel types");}
+            }
+            case LT, GT, LE, GE, OR, AND -> {
+                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
+                else {check(false, "incompatible types");}
+            }
+            case BITOR, BITAND -> {
+                if(left == Type.PIXEL && right == Type.PIXEL) {result = Type.PIXEL;}
+                else {check(false, "incompatible types");}
+            }
+            default ->{
+                throw new PLCException("compiler error");
+            }
+        }
+        binaryExpr.setType(result);
+        return result;
     }
 
     @Override
@@ -67,12 +145,14 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws PLCException {
-        return null;
+        stringLitExpr.setType(Type.STRING);
+        return Type.STRING;  //or getValue?
     }
 
     @Override
     public Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCException {
-        return null;
+        numLitExpr.setType(Type.INT);
+        return Type.INT;
     }
 
     @Override
@@ -87,12 +167,18 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitPredeclaredVarExpr(PredeclaredVarExpr predeclaredVarExpr, Object arg) throws PLCException {
-        return null;
+        return predeclaredVarExpr.getType();
     }
 
     @Override
     public Object visitProgram(Program program, Object arg) throws PLCException {
-        return null;
+        //Object ident = program.ident.visit(this,null);
+        List<NameDef> paramList = program.getParamList();
+        //Object block = program.block.visit(this, null);
+        for(NameDef node : paramList) {
+            node.visit(this,arg);
+        }
+        return program;
     }
 
     @Override
@@ -112,12 +198,12 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitZExpr(ZExpr constExpr, Object arg) throws PLCException {
-        return null;
+        return constExpr.getType();
     }
 
     @Override
     public Object visitRandomExpr(RandomExpr randomExpr, Object arg) throws PLCException {
-        return null;
+        return randomExpr.getType();
     }
 
     @Override

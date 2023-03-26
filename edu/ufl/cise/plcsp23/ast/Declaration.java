@@ -17,11 +17,13 @@ public class Declaration extends AST {
 
 	final NameDef nameDef;
 	final Expr initializer;
+	final Boolean initialized;  //added this for visitor implementation
 
-	public Declaration(IToken firstToken, NameDef nameDef, Expr initializer) {
+	public Declaration(IToken firstToken, NameDef nameDef, Expr initializer, boolean initialized) {
 		super(firstToken);
 		this.nameDef = nameDef;
 		this.initializer = initializer;
+		this.initialized = initialized;
 	}
 
 	@Override

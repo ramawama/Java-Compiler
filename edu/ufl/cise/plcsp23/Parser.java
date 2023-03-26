@@ -119,9 +119,9 @@ public class Parser implements IParser{
             retName = nameDef();
             if(match(Kind.ASSIGN)) {
                 Expr decExpr = expression();
-                ret.add(new Declaration(first, retName, decExpr));
+                ret.add(new Declaration(first, retName, decExpr, true));
             }
-            else ret.add(new Declaration(first, retName, null));
+            else ret.add(new Declaration(first, retName, null, false));
             match(Kind.DOT);
         }
         return ret;

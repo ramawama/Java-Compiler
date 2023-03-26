@@ -20,6 +20,7 @@ public class Token implements IToken {
 
 
 
+
     @Override
     public SourceLocation getSourceLocation() {
         //start both line location and character location at 1
