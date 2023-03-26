@@ -29,7 +29,17 @@ public class ASTVisit implements ASTVisitor{
 
     private void check(boolean cond, String message) throws TypeCheckException {
         if(!cond) {throw new TypeCheckException(message);}
+    }
 
+    private boolean compatible(Type target, Type rhs){
+        return (target == rhs ||
+                (target == Type.IMAGE && rhs == Type.PIXEL) ||
+                (target == Type.IMAGE && rhs == Type.STRING) ||
+                (target == Type.PIXEL && rhs == Type.INT) ||
+                (target == Type.INT && rhs == Type.PIXEL) ||
+                (target == Type.STRING && rhs == Type.INT) ||
+                (target == Type.STRING && rhs == Type.PIXEL) ||
+                (target == Type.STRING && rhs == Type.IMAGE));
     }
 
     @Override
@@ -39,6 +49,15 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCException {
+        String name = declaration.getNameDef().toString();
+        boolean inserted = symbolTable.insert(name, declaration);
+        check(inserted, "variable " + name + " already declared");
+        Expr init = declaration.getInitializer();;
+        if(init != null){
+            Type initType = (Type)init.visit(this,arg);
+            check(compatible(declaration.getNameDef().type, initType), "expression and declared types do not match");
+            declaration.initialized = true;
+        }
         return null;
     }
 
@@ -54,14 +73,7 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitIdent(Ident ident, Object arg) throws PLCException {
-        String name = ident.getName();
-        Declaration dec = symbolTable.lookup(name);
-        check(dec != null, "unidentified ident" + name);
-        check(dec.initialized, "using uninitialized variable");
-        ident.setDef(dec.nameDef); //save declaration
-        Type type = dec.getNameDef().getType();
-        //set ident type??
-        return type;
+        return null;
     }
 
     @Override
@@ -183,7 +195,14 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCException {
-        return null;
+        String name = identExpr.getName();
+        Declaration dec = symbolTable.lookup(name);
+        check(dec != null, "unidentified ident" + name);
+        check(dec.initialized, "using uninitialized variable");
+        //save declaration?
+        Type type = dec.getNameDef().getType();
+        identExpr.setType(type);
+        return type;
     }
 
     @Override

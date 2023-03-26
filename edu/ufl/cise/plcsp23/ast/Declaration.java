@@ -17,7 +17,7 @@ public class Declaration extends AST {
 
 	final NameDef nameDef;
 	final Expr initializer;
-	final Boolean initialized;  //added this for visitor implementation
+	Boolean initialized;  //added this for visitor implementation
 
 	public Declaration(IToken firstToken, NameDef nameDef, Expr initializer, boolean initialized) {
 		super(firstToken);
