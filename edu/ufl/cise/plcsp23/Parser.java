@@ -65,6 +65,7 @@ public class Parser implements IParser{
 
     private NameDef nameDef() throws PLCException{ //maybe change access modifier idk should be good for now
         IToken firstNameDef = null;
+
         if (match(Kind.RES_image,Kind.RES_pixel, Kind.RES_int, Kind.RES_string, Kind.RES_void))
             firstNameDef = prev; //NameDef must start with type
         else throw new SyntaxException("Expected Type");
@@ -112,16 +113,17 @@ public class Parser implements IParser{
         boolean inDec = true;
         IToken first;
         while (inDec){
-            if (current.getKind() == Kind.RES_while || current.getKind() == Kind.RES_write || current.getKind() == Kind.IDENT || current.getKind() == Kind.RCURLY)
+            if (current.getKind() == Kind.RES_while || current.getKind() == Kind.RES_write || current.getKind() == Kind.IDENT || current.getKind() == Kind.RCURLY || current.getKind() == Kind.COLON)
                 break; //must be end or statement
             first = current;
 
             retName = nameDef();
             if(match(Kind.ASSIGN)) {
                 Expr decExpr = expression();
-                ret.add(new Declaration(first, retName, decExpr, true));
+
+                ret.add(new Declaration(first, retName, decExpr)); //true
             }
-            else ret.add(new Declaration(first, retName, null, false));
+            else ret.add(new Declaration(first, retName, null)); //false
             match(Kind.DOT);
         }
         return ret;

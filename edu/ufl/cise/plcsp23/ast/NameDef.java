@@ -18,12 +18,14 @@ public class NameDef extends AST {
 	final Type type;
 	final Dimension dimension;
 	final Ident ident;
+
 	
 	public NameDef(IToken firstToken, Type type, Dimension dimension, Ident ident) {
 		super(firstToken);
 		this.type = type;
 		this.dimension = dimension;
 		this.ident = ident;
+
 	}
 
 	@Override
