@@ -113,19 +113,18 @@ public class Parser implements IParser{
         boolean inDec = true;
         IToken first;
         while (inDec){
-            if (current.getKind() == Kind.RES_while || current.getKind() == Kind.RES_write || current.getKind() == Kind.IDENT || current.getKind() == Kind.RCURLY || current.getKind() == Kind.COLON)
+            if (current.getKind() == Kind.RES_while || current.getKind() == Kind.IDENT || current.getKind() == Kind.RES_write || current.getKind() == Kind.RCURLY || current.getKind() == Kind.COLON)
                 break; //must be end or statement
             first = current;
-
             retName = nameDef();
             if(match(Kind.ASSIGN)) {
                 Expr decExpr = expression();
-
                 ret.add(new Declaration(first, retName, decExpr)); //true
             }
             else ret.add(new Declaration(first, retName, null)); //false
             match(Kind.DOT);
         }
+
         return ret;
     }
 
@@ -135,21 +134,11 @@ public class Parser implements IParser{
         Expr retExpr;
         Block retBlock;
         while (match(Kind.RES_while,Kind.RES_write,Kind.IDENT,Kind.COLON)){
+            first = prev;
             switch (first.getKind()){
-                case IDENT -> {
-                    LValue retL = lValue();
-                    if (match(Kind.ASSIGN)){
-                        retExpr = expression();
-                        ret.add(new AssignmentStatement(first,retL,retExpr));
-                        if(current.getKind() != Kind.DOT) throw new SyntaxException("Expected .");
-                    }
-                    else throw new SyntaxException("Expected =");
-                }
                 case RES_write -> {
-
                     retExpr = expression();
                     ret.add(new WriteStatement(first,retExpr));
-
                 }
                 case RES_while -> {
                     retExpr = expression();
@@ -160,7 +149,17 @@ public class Parser implements IParser{
                     retExpr = expression();
                     ret.add(new ReturnStatement(first,retExpr));
                 }
+                case IDENT -> {
+                    LValue retL = lValue();
+                    if (match(Kind.ASSIGN)){
+                        retExpr = expression();
+                        ret.add(new AssignmentStatement(first,retL,retExpr));
+                        if(current.getKind() != Kind.DOT) throw new SyntaxException("Expected .");
+                    }
+                    else throw new SyntaxException("Expected =");
+                }
                 default -> throw new SyntaxException("Expected statement");
+
             }
 
             if(match(Kind.RCURLY)){
@@ -179,7 +178,6 @@ public class Parser implements IParser{
 
         PixelSelector retPixel = null;
         if (match(Kind.LSQUARE)){ //pixel selector
-
             retPixel = pixelSelector();
         }
         if (match(Kind.COLON)){ // Channel selector
@@ -312,6 +310,7 @@ public class Parser implements IParser{
     private PixelSelector pixelSelector() throws PLCException{
         IToken start = prev;
         Expr x = expression();
+
         if (!match(Kind.COMMA)) throw new SyntaxException("Expected ,");
         Expr y = expression();
         PixelSelector retPixel = new PixelSelector(start,x,y);
@@ -335,6 +334,7 @@ public class Parser implements IParser{
 
     private PixelFuncExpr pixelFunc() throws PLCException{
         IToken start = prev;
+
         PixelSelector pixel = null;
         if (match(Kind.LSQUARE)) pixel = pixelSelector();
         else throw new SyntaxException("Expected [");
@@ -344,6 +344,7 @@ public class Parser implements IParser{
 
     private Expr primary() throws PLCException{               //add try block prob
         Expr expr;
+
         if(match(Kind.STRING_LIT))
             return new StringLitExpr(prev);
         else if(match(Kind.NUM_LIT))
@@ -363,6 +364,7 @@ public class Parser implements IParser{
         else if(match(Kind.RES_r))
             return new PredeclaredVarExpr(prev);
         else if(match(Kind.LSQUARE)){
+
             expr = expandedPixel();
         }
         else if(match(Kind.RES_x_cart,Kind.RES_y_cart,Kind.RES_a_polar,Kind.RES_r_polar)){
