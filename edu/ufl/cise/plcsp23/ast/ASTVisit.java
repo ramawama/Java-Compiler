@@ -301,18 +301,11 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCException {
-        /*NameDef checker = symbolTable.lookup(identExpr.getName());
-        //identExpr.setType(checker.getType());
+        NameDef checker = symbolTable.lookup(identExpr.getName());
         check(!checker.equals(null),"Undefined variable");
         System.out.println(symbolTable.sStack.peek());
-        check(!symbolTable.sStack.peek().equals(checker),"Initializer cannot refer to name being defined" );
-        return checker.getType();*/
-
-        NameDef name = symbolTable.lookup(identExpr.getName());
-        check(name != null, "Undefined variable");
-        check(name.initialized, "Initializer cannot refer to name being defined");
-        identExpr.setType(name.getType());
-        return name.getType();
+        check(!symbolTable.sStack.peek().equals(checker) || !checker.initialized,"Initializer cannot refer to name being defined" );
+        return checker.getType();
     }
 
     @Override
