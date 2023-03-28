@@ -13,10 +13,14 @@ public class ASTVisit implements ASTVisitor{
     public static class SymbolTable {
         static Type progType;
         private int currScope = 0;
+        private String name;
         Stack<Object> sStack = new Stack<>(); // for authentication in declaring and initializing in same expression @test8
         HashMap<String, NameDef> entries = new HashMap<>(); //changed to namedef
+        HashMap<String, Integer> scopeMap = new HashMap<>();
 
         public boolean insert(String name, NameDef namedef){
+            this.name = name;
+            scopeMap.putIfAbsent(name, 0);
             return (entries.putIfAbsent(name, namedef)==null);
         }
 
@@ -26,9 +30,10 @@ public class ASTVisit implements ASTVisitor{
 
         public void enterScope(){
             currScope++;
+            scopeMap.putIfAbsent(this.name, currScope);
         }
         public void leaveScope(){
-
+            scopeMap.remove(this.name);
         }
     }
 
@@ -82,27 +87,29 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitDimension(Dimension dimension, Object arg) throws PLCException {
-        Expr expr1 = dimension.getWidth();
-        Expr expr2 = dimension.getHeight();
-        expr1.setType((Type) expr1.visit(this,arg));
-        expr2.setType((Type) expr1.visit(this,arg));
-        System.out.println(expr1.firstToken.getTokenString());
-        System.out.println(expr2.firstToken.getTokenString());
-        System.out.println(expr1.getType());
-        check(expr1.getType().equals(Type.INT),"Type should be int");
-        check(expr2.getType().equals(Type.INT),"Type should be int");
+        Expr e1 = dimension.getWidth();
+        Expr e2 = dimension.getHeight();
+        Type expr1 = (Type) dimension.getWidth().visit(this, arg);
+        Type expr2 = (Type) dimension.getHeight().visit(this, arg);
+        System.out.println(e1.firstToken.getTokenString());
+        System.out.println(e2.firstToken.getTokenString());
+        check(expr1.equals(Type.INT),"Type should be int");
+        check(expr2.equals(Type.INT),"Type should be int");
         return null;
     }
 
     @Override
     public Object visitExpandedPixelExpr(ExpandedPixelExpr expandedPixelExpr, Object arg) throws PLCException {
-        Expr expr0 = expandedPixelExpr.getRedExpr();
+        /*Expr expr0 = expandedPixelExpr.getRedExpr();
         expr0.setType( (Type) expr0.visit(this,arg));
         Expr expr1 = expandedPixelExpr.getGrnExpr();
         expr1.setType( (Type) expr1.visit(this,arg));
         Expr expr2 = expandedPixelExpr.getBluExpr();
-        expr2.setType((Type)expr2.visit(this,arg));
-        check(expr0.getType() == Type.INT && expr1.getType() == Type.INT && expr2.getType() == Type.INT,"Pixel Expr0 and Expr1 must be int");
+        expr2.setType((Type)expr2.visit(this,arg));*/
+        Type expr0 = (Type) expandedPixelExpr.getRedExpr().visit(this, arg);
+        Type expr1 = (Type) expandedPixelExpr.getGrnExpr().visit(this, arg);
+        Type expr2 = (Type) expandedPixelExpr.getBluExpr().visit(this, arg);
+        check(expr0 == Type.INT && expr1 == Type.INT && expr2 == Type.INT,"Pixel Expr0 and Expr1 must be int");
         return Type.PIXEL;
     }
 
@@ -121,52 +128,55 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCException {
-        Object right = binaryExpr.right.visit(this, arg);
-        Object left = binaryExpr.left.visit(this, arg);
+        Type right = (Type) binaryExpr.getRight().visit(this, arg);
+        Type left = (Type) binaryExpr.getLeft().visit(this, arg);
 
-        Type result = null;
 
         switch(binaryExpr.op){
             case PLUS -> {
-                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
-                else if (left == Type.STRING && right == Type.STRING) {result = Type.STRING;}
-                else if(left == Type.PIXEL && right == Type.PIXEL) {result = Type.PIXEL;}
-                else if(left == Type.IMAGE && right == Type.IMAGE) {result = Type.IMAGE;}
+                /*if(left == Type.INT && right == Type.INT) {binaryExpr.setType(Type.INT);}
+                else if (left == Type.STRING && right == Type.STRING) {binaryExpr.setType(Type.STRING);}
+                else if(left == Type.PIXEL && right == Type.PIXEL) {binaryExpr.setType(Type.PIXEL);}
+                else if(left == Type.IMAGE && right == Type.IMAGE) {binaryExpr.setType(Type.IMAGE);}*/
+                if(left == right) {binaryExpr.setType(left);}
                 else {check(false, "incompatible types");}
             }
             case MINUS -> {
-                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
-                else if(left == Type.PIXEL && right == Type.PIXEL) {result = Type.PIXEL;}
-                else if(left == Type.IMAGE && right == Type.IMAGE) {result = Type.IMAGE;}
+                if(left == Type.INT && right == Type.INT) {binaryExpr.setType(Type.INT);}
+                else if(left == Type.PIXEL && right == Type.PIXEL) {binaryExpr.setType(Type.PIXEL);}
+                else if(left == Type.IMAGE && right == Type.IMAGE) {binaryExpr.setType(Type.IMAGE);}
                 else{check(false, "incompatible types");}
             }
             case TIMES,DIV,MOD -> {
-                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
-                else if(left == Type.PIXEL && right == Type.PIXEL) {result = Type.PIXEL;}
-                else if(left == Type.IMAGE && right == Type.IMAGE) {result = Type.IMAGE;}
-                else if(left == Type.PIXEL && right == Type.INT) {result = Type.PIXEL;}
-                else if(left == Type.IMAGE && right == Type.INT) {result = Type.IMAGE;}
+                if(left == Type.INT && right == Type.INT) {binaryExpr.setType(Type.INT);}
+                else if(left == Type.PIXEL && right == Type.PIXEL) {binaryExpr.setType(Type.PIXEL);}
+                else if(left == Type.IMAGE && right == Type.IMAGE) {binaryExpr.setType(Type.IMAGE);}
+                else if(left == Type.PIXEL && right == Type.INT) {binaryExpr.setType(Type.PIXEL);}
+                else if(left == Type.IMAGE && right == Type.INT) {binaryExpr.setType(Type.IMAGE);}
                 else {check(false, "incompatible types");}
             }
             case EXP -> {
-                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
-                else if(left == Type.PIXEL && right == Type.INT) {result = Type.PIXEL;}
+                if(left == Type.INT && right == Type.INT) {binaryExpr.setType(Type.INT);}
+                else if(left == Type.PIXEL && right == Type.INT) {binaryExpr.setType(Type.PIXEL);}
                 else {check(false, "incompatiblel types");}
             }
             case LT, GT, LE, GE, OR, AND -> {
-                if(left == Type.INT && right == Type.INT) {result = Type.INT;}
+                if(left == Type.INT && right == Type.INT) {binaryExpr.setType(Type.INT);}
                 else {check(false, "incompatible types");}
             }
             case BITOR, BITAND -> {
-                if(left == Type.PIXEL && right == Type.PIXEL) {result = Type.PIXEL;}
+                if(left == Type.PIXEL && right == Type.PIXEL) {binaryExpr.setType(Type.PIXEL);}
+                else {check(false, "incompatible types");}
+            }
+            case EQ -> {
+                if(left == right){binaryExpr.setType(Type.INT);}
                 else {check(false, "incompatible types");}
             }
             default ->{
-                throw new PLCException("compiler error");
+                throw new TypeCheckException("compiler error");
             }
         }
-        binaryExpr.setType(result);
-        return result;
+        return binaryExpr.getType();
     }
 
     @Override
@@ -227,9 +237,11 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitWhileStatement(WhileStatement whileStatement, Object arg) throws PLCException {
-        Expr e = (Expr) whileStatement.getGuard().visit(this, arg);
+        Expr e =  (Expr) whileStatement.getGuard().visit(this, arg);
         check(e.getType() == Type.INT, "Type is not an int");
-        //currently workin on this
+        symbolTable.enterScope();
+        Block b = (Block) whileStatement.getBlock().visit(this, arg);
+        symbolTable.leaveScope();
         return null;
     }
 
@@ -289,13 +301,18 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCException {
-        NameDef checker = symbolTable.lookup(identExpr.getName());
+        /*NameDef checker = symbolTable.lookup(identExpr.getName());
         //identExpr.setType(checker.getType());
         check(!checker.equals(null),"Undefined variable");
         System.out.println(symbolTable.sStack.peek());
         check(!symbolTable.sStack.peek().equals(checker),"Initializer cannot refer to name being defined" );
+        return checker.getType();*/
 
-        return checker.getType();
+        NameDef name = symbolTable.lookup(identExpr.getName());
+        check(name != null, "Undefined variable");
+        check(name.initialized, "Initializer cannot refer to name being defined");
+        identExpr.setType(name.getType());
+        return name.getType();
     }
 
     @Override

@@ -119,6 +119,7 @@ public class Parser implements IParser{
             retName = nameDef();
             if(match(Kind.ASSIGN)) {
                 Expr decExpr = expression();
+                retName.initialized = true;
                 ret.add(new Declaration(first, retName, decExpr)); //true
             }
             else ret.add(new Declaration(first, retName, null)); //false
