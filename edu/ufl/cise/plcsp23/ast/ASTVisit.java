@@ -4,6 +4,7 @@ import edu.ufl.cise.plcsp23.PLCException;
 import edu.ufl.cise.plcsp23.TypeCheckException;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Stack;
 
 
@@ -11,6 +12,7 @@ public class ASTVisit implements ASTVisitor{
 
     public static class SymbolTable {
         static Type progType;
+        private int currScope = 0;
         Stack<Object> sStack = new Stack<>(); // for authentication in declaring and initializing in same expression @test8
         HashMap<String, NameDef> entries = new HashMap<>(); //changed to namedef
 
@@ -20,6 +22,13 @@ public class ASTVisit implements ASTVisitor{
 
         public NameDef lookup(String name) {
             return entries.get(name);
+        }
+
+        public void enterScope(){
+            currScope++;
+        }
+        public void leaveScope(){
+
         }
     }
 
@@ -39,13 +48,20 @@ public class ASTVisit implements ASTVisitor{
                 (target == Type.INT && rhs == Type.PIXEL) ||
                 (target == Type.STRING && rhs == Type.INT) ||
                 (target == Type.STRING && rhs == Type.PIXEL) ||
-                (target == Type.STRING && rhs == Type.IMAGE));
+                (target == Type.STRING && rhs == Type.IMAGE) );
     }
 
     @Override
     public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws PLCException {
+        Expr guard = conditionalExpr.getGuard();
+        guard.setType((Type)guard.visit(this,arg));
+        Expr trueCase = conditionalExpr.getTrueCase();
+        trueCase.setType((Type) trueCase.visit(this,arg));
+        Expr falseCase = conditionalExpr.getFalseCase();
+        falseCase.setType((Type)falseCase.visit(this,arg));
 
-        return null;
+        check(guard.getType() == Type.INT && trueCase.getType() == falseCase.getType(), "expr0 must be type int and expr1 & 2 types must match");
+        return trueCase.type;
     }
 
     @Override
@@ -59,8 +75,7 @@ public class ASTVisit implements ASTVisitor{
             Type initType = (Type) init.visit(this,arg);
             System.out.println(nameDef.getType());
             System.out.println(initType);
-            check(compatible(declaration.getNameDef().getType(), initType), "expression and declared types do not match");
-
+            check(compatible(nameDef.getType(), initType), "expression and declared types do not match");
         }
         return null;
     }
@@ -76,22 +91,31 @@ public class ASTVisit implements ASTVisitor{
         System.out.println(expr1.getType());
         check(expr1.getType().equals(Type.INT),"Type should be int");
         check(expr2.getType().equals(Type.INT),"Type should be int");
-
         return null;
     }
 
     @Override
     public Object visitExpandedPixelExpr(ExpandedPixelExpr expandedPixelExpr, Object arg) throws PLCException {
-        return null;
+        Expr expr0 = expandedPixelExpr.getRedExpr();
+        expr0.setType( (Type) expr0.visit(this,arg));
+        Expr expr1 = expandedPixelExpr.getGrnExpr();
+        expr1.setType( (Type) expr1.visit(this,arg));
+        Expr expr2 = expandedPixelExpr.getBluExpr();
+        expr2.setType((Type)expr2.visit(this,arg));
+        check(expr0.getType() == Type.INT && expr1.getType() == Type.INT && expr2.getType() == Type.INT,"Pixel Expr0 and Expr1 must be int");
+        return Type.PIXEL;
     }
 
     @Override
     public Object visitIdent(Ident ident, Object arg) throws PLCException {
-        return null;
+        return ident.getDef().getType();
     }
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement statementAssign, Object arg) throws PLCException {
+        Type lVal = (Type) statementAssign.getLv().visit(this, arg);
+        Type eType = ((Type) statementAssign.getE().visit(this, arg));
+        check(compatible(lVal, eType), "incompatible types");
         return null;
     }
 
@@ -99,8 +123,7 @@ public class ASTVisit implements ASTVisitor{
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCException {
         Object right = binaryExpr.right.visit(this, arg);
         Object left = binaryExpr.left.visit(this, arg);
-        //System.out.println(right.toString());
-        //System.out.println(left.toString());
+
         Type result = null;
 
         switch(binaryExpr.op){
@@ -123,7 +146,7 @@ public class ASTVisit implements ASTVisitor{
                 else if(left == Type.IMAGE && right == Type.IMAGE) {result = Type.IMAGE;}
                 else if(left == Type.PIXEL && right == Type.INT) {result = Type.PIXEL;}
                 else if(left == Type.IMAGE && right == Type.INT) {result = Type.IMAGE;}
-                else {check(false, "incompatiblel types");}
+                else {check(false, "incompatible types");}
             }
             case EXP -> {
                 if(left == Type.INT && right == Type.INT) {result = Type.INT;}
@@ -148,12 +171,34 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitBlock(Block block, Object arg) throws PLCException {
+        List<Declaration> decList = block.getDecList();
+        for(Declaration dList: decList){
+            dList.visit(this, arg);
+        }
+        List<Statement> stateList = block.getStatementList();
+        for(Statement sList: stateList){
+            sList.visit(this, arg);
+        }
         return null;
     }
 
     @Override
     public Object visitUnaryExpr(UnaryExpr unaryExpr, Object arg) throws PLCException {
-        return null;
+        Expr e = unaryExpr.getE();
+        e.setType((Type)e.visit(this, arg));
+        Type result = null;
+        switch(unaryExpr.op){
+            case BANG ->{
+                if(e.getType() == Type.INT) { result = Type.INT;}
+                else if(e.getType() == Type.PIXEL) {result = Type.PIXEL;}
+                else{check(false, "incompatible types");}
+            }
+            case MINUS, RES_cos, RES_sin, RES_atan -> {
+                if(e.getType() == Type.INT) {result = Type.INT;}
+                else{check(false, "incompatible types");}
+            }
+        }
+        return result;
     }
 
     @Override
@@ -182,12 +227,16 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitWhileStatement(WhileStatement whileStatement, Object arg) throws PLCException {
+        Expr e = (Expr) whileStatement.getGuard().visit(this, arg);
+        check(e.getType() == Type.INT, "Type is not an int");
+        //currently workin on this
         return null;
     }
 
     @Override
     public Object visitWriteStatement(WriteStatement statementWrite, Object arg) throws PLCException {
-        return null;
+        Expr e = (Expr) statementWrite.getE().visit(this, arg);
+        return e.getType();
     }
 
     @Override
@@ -197,7 +246,6 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCException {
-
         return Type.INT;
     }
 
@@ -213,17 +261,19 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitPixelFuncExpr(PixelFuncExpr pixelFuncExpr, Object arg) throws PLCException {
-        return null;
+        PixelSelector pf = (PixelSelector) pixelFuncExpr.getSelector().visit(this, arg);
+        return Type.INT;
     }
 
     @Override
     public Object visitPredeclaredVarExpr(PredeclaredVarExpr predeclaredVarExpr, Object arg) throws PLCException {
-        return null;
+        return Type.INT;
     }
 
     @Override
     public Object visitProgram(Program program, Object arg) throws PLCException {
         symbolTable.progType = program.type;
+
         for (int i = 0; i < program.getParamList().size(); i++){ //visits namedef
             visitNameDef(program.getParamList().get(i),arg);
         }
@@ -239,16 +289,10 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCException {
-//        String name = identExpr.getName();
-//        Declaration dec = symbolTable.lookup(name);
-//        check(dec != null, "unidentified ident" + name);
-//        check(dec.initialized, "using uninitialized variable");
-//        //save declaration?
-//        Type type = dec.getNameDef().getType();
-//        identExpr.setType(type);
-//        return type;
         NameDef checker = symbolTable.lookup(identExpr.getName());
+        //identExpr.setType(checker.getType());
         check(!checker.equals(null),"Undefined variable");
+        System.out.println(symbolTable.sStack.peek());
         check(!symbolTable.sStack.peek().equals(checker),"Initializer cannot refer to name being defined" );
 
         return checker.getType();
@@ -256,19 +300,33 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitLValue(LValue lValue, Object arg) throws PLCException {
-//        Ident ident = lValue.getIdent();
-//        PixelSelector pixel = lValue.getPixelSelector();
-//        ColorChannel color = lValue.getColor();
-//        check(symbolTable.entries.containsKey(ident.getName()),"Ident has not been declared / not visible");
-//        System.out.println("ident.getName()");
-//        return ident.def.getType();
-        return null;
+        Ident ident = lValue.getIdent();
+        PixelSelector pixel = lValue.getPixelSelector();
+        ColorChannel color = lValue.getColor();
+        Type result = null;
+        NameDef def = symbolTable.lookup(ident.getName());
+        System.out.println(def);
+        if(def.getType() == Type.IMAGE){
+            if((pixel == null && color == null) || (pixel == null && color != null)){result = Type.IMAGE;}
+            else if (pixel != null && color == null){result = Type.PIXEL;}
+            else if (pixel != null && color != null){result = Type.INT;}
+        }else if (def.getType() == Type.PIXEL){
+            if(pixel == null && color == null){result = Type.PIXEL;}
+            else if(pixel == null && color != null){result = Type.INT;}
+        }else if(def.getType() == Type.STRING){
+            if(pixel == null && color == null){result = Type.STRING;}
+        }else if(def.getType() == Type.INT){
+            if(pixel == null && color == null){result = Type.INT;}
+        }
+        check(!symbolTable.sStack.peek().equals(ident.getDef()), "Not visible in scope");
+        check(symbolTable.entries.containsKey(ident.getName()),"Ident has not been declared / not visible");
+        return result;
+        //return ident.def.getType();
     }
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCException {
         //System.out.println(nameDef.getIdent().getName());
-
         check(!nameDef.getType().equals(Type.VOID),"Type cannot be void");
         if (nameDef.getDimension() != null){
             System.out.println(nameDef.getType());
@@ -276,19 +334,19 @@ public class ASTVisit implements ASTVisitor{
             visitDimension(nameDef.getDimension(),arg);
         }
         check(symbolTable.insert(nameDef.getIdent().getName(),nameDef), "Name already declared");
-            //if false already present
+        //if false already present
         symbolTable.sStack.push(nameDef);
         return null;
     }
 
     @Override
     public Object visitZExpr(ZExpr constExpr, Object arg) throws PLCException {
-        return null;
+        return Type.INT;
     }
 
     @Override
     public Object visitRandomExpr(RandomExpr randomExpr, Object arg) throws PLCException {
-        return null;
+        return Type.INT;
     }
 
     @Override
