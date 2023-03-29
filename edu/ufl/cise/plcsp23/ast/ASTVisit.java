@@ -3,40 +3,70 @@ package edu.ufl.cise.plcsp23.ast;
 import edu.ufl.cise.plcsp23.PLCException;
 import edu.ufl.cise.plcsp23.TypeCheckException;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 
 public class ASTVisit implements ASTVisitor{
 
     public static class SymbolTable {
+        private boolean startScope;
         static Type progType;
-        private int currScope = 0;
+        private int currScope;
         private String name;
         private NameDef nameDef;
+        Vector<NameDef> parameters = new Vector<>();
         Stack<Object> sStack = new Stack<>(); // for authentication in declaring and initializing in same expression @test8
         HashMap<String, NameDef> entries = new HashMap<>(); //changed to namedef
         Stack<HashMap<String, NameDef>> scopeMap = new Stack<>();
+
         public boolean insert(String name, NameDef namedef){
             this.name = name;
             //scopeMap.putIfAbsent(name, currScope);
             this.nameDef = namedef;
+            if (currScope > 0){
+//                for(NameDef names: parameters){
+//                    if(names == namedef) return true;
+//                }
+                System.out.println(currScope);
+                return (scopeMap.peek().putIfAbsent(name,namedef) == null);
+            }
+
+
             return (entries.putIfAbsent(name, namedef)==null);
         }
 
         public NameDef lookup(String name) {
+            if (currScope > 0){
+                for(NameDef names: parameters){
+                    System.out.println(names.getIdent().getName());
+                    System.out.println(name);
+
+                    if(names.getIdent().getName().equals(name)){
+                        System.out.println("BALFUHS");
+                        return names;
+                    }
+                }
+                return scopeMap.peek().get(name);
+            }
             return entries.get(name);
         }
 
         public void enterScope(){
             currScope++;
-            //HashMap<>
+            System.out.println("currScope");
+            System.out.println(currScope);
+
+            startScope = true;
             scopeMap.push(new HashMap<>());
+
         }
         public void leaveScope(){
             //entries.remove(name);
             currScope--;
+            System.out.println("-currScope");
+            System.out.println(currScope);
+
+            startScope = false;
             scopeMap.pop();
         }
     }
@@ -189,6 +219,8 @@ public class ASTVisit implements ASTVisitor{
         for(Declaration dList: decList){
             dList.visit(this, arg);
         }
+        System.out.println("me");
+        symbolTable.sStack.push(null);
         List<Statement> stateList = block.getStatementList();
         for(Statement sList: stateList){
             sList.visit(this, arg);
@@ -244,14 +276,18 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitWhileStatement(WhileStatement whileStatement, Object arg) throws PLCException {
+        symbolTable.enterScope();
         Type e = (Type) whileStatement.getGuard().visit(this, arg);
         check(e == Type.INT, "Type is not an int");
+//        System.out.println(e.name());
+//        System.out.println(whileStatement.guard.toString());
+//        System.out.println(symbolTable.currScope);
 
-        System.out.println(symbolTable.currScope);
-        symbolTable.enterScope();
-        System.out.println(symbolTable.currScope);
+        //System.out.println(symbolTable.currScope);
         whileStatement.getBlock().visit(this, arg);
+        //System.out.println(symbolTable.currScope);
         symbolTable.leaveScope();
+        //System.out.println(symbolTable.currScope);
 
         return null;
     }
@@ -299,28 +335,31 @@ public class ASTVisit implements ASTVisitor{
 
         for (int i = 0; i < program.getParamList().size(); i++){ //visits namedef
             visitNameDef(program.getParamList().get(i),arg);
+            symbolTable.parameters.add((NameDef)symbolTable.sStack.peek());
         }
+//        Iterator hmIter = symbolTable.entries.entrySet().iterator();
+//        while(hmIter.hasNext()){
+//            Map.Entry mapElement = (Map.Entry)hmIter.next();
+//            symbolTable.parameters.add((NameDef) mapElement.getValue());
+//        }
         Block block = program.getBlock();
-        for (Declaration dList : block.decList){
-            dList.visit(this,arg);
+        block.visit(this,arg);
 
-        }
-        symbolTable.sStack.push(null);
-        for (Statement sList : block.statementList){
-            //System.out.println(sList.toString());
-            sList.visit(this,arg);
-
-        }
         return null;
     }
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCException {
+        if(symbolTable.startScope == true){
+            symbolTable.scopeMap.peek().put(identExpr.getName(),symbolTable.entries.get(identExpr.getName()));
+            symbolTable.startScope = false;
+        }
         NameDef checker = symbolTable.lookup(identExpr.getName());
-        check(!checker.equals(null),"Undefined variable");
+        check(!(checker == null),"Undefined variable");
         /*System.out.println("symbolTable.sStack.peek(");
         System.out.println(symbolTable.sStack.peek());*/
         System.out.println(checker.getIdent().getName());
+
         if(symbolTable.sStack.peek() != null){
             check(!symbolTable.sStack.peek().equals(checker) || !checker.initialized,"Initializer cannot refer to name being defined" );
         }
@@ -334,8 +373,9 @@ public class ASTVisit implements ASTVisitor{
         ColorChannel color = lValue.getColor();
         Type result = null;
         NameDef def = symbolTable.lookup(ident.getName());
+        System.out.println("def");
         //System.out.println("def");
-        //System.out.println(ident.getName());
+        System.out.println(ident.getName());
         if(def.getType() == Type.IMAGE){
             if((pixel == null && color == null) || (pixel == null && color != null)){result = Type.IMAGE;}
             else if (pixel != null && color == null){result = Type.PIXEL;}
@@ -366,7 +406,8 @@ public class ASTVisit implements ASTVisitor{
         }
         check(symbolTable.insert(nameDef.getIdent().getName(),nameDef) , "Name already declared");
         //if false already present
-        symbolTable.insert(nameDef.getIdent().getName(),nameDef);
+
+        //symbolTable.insert(nameDef.getIdent().getName(),nameDef);
         symbolTable.sStack.push(nameDef);
         return null;
     }
