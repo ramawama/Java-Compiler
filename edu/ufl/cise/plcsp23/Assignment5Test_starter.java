@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import edu.ufl.cise.plcsp23.ast.AST;
 import edu.ufl.cise.plcsp23.ast.Program;
 import edu.ufl.cise.plcsp23.runtime.ConsoleIO;
+import java.io.Console;
 import edu.ufl.cise.plcsp23.javaCompilerClassLoader.DynamicClassLoader;
 import edu.ufl.cise.plcsp23.javaCompilerClassLoader.DynamicCompiler;
 
@@ -21,7 +22,7 @@ class Assignment5Test_starter {
 		ast.visit(CompilerComponentFactory.makeTypeChecker(), null);		
 		String name = ((Program)ast).getIdent().getName();
 		String packageName = "";
-		String code = (String) ast.visit(CompilerComponentFactory.makeCodeGenerator(packageName),null);
+		String code = (String) ast.visit(CompilerComponentFactory.makeCodeGenerator(mypackage),null);
 		show("**** Generated Code ****");
 		show(code);
 		show("**** Output ****");
@@ -162,7 +163,7 @@ class Assignment5Test_starter {
 	}
 	
 	@Test
-	void cg7() throws Exception{
+	void cg7() throws Exception{   //Java is not recognizing ConsoleIO
 		String input = """
 				void d(int val){
 				int vv = val/2.
@@ -232,34 +233,36 @@ class Assignment5Test_starter {
 		int result = (Integer)genCodeAndRun(input,"",params);
 		assertEquals(0,result);
 	}
-	
+
 	@Test
 	void cg10() throws Exception{
 		String input = """
-				int testWhile(int val){
-				int aa = val.
-				int g = aa.
-				write val.
-				while (!(g == 0)) {
-				  int aa = val/2.
-				  write "outer loop:  aa=".
-				  write aa.
-				  g = (aa%2==0).
-				  val = val-1.
-				  while (val > 0){
-				     int aa = val/5.
-				     write "inner loop:  aa=".
-				     write aa.
-				     val = 0.
-				  }.
-				  write "outer loop after inner loop:  aa=".
-				  write aa.
-				}.
-				: aa.
-				}
-				""";
+ 			int testWhile(int val){
+			int aa = val.
+ 			int g = aa.
+ 			write val.
+ 			while (g > 0) {
+ 			int aa = val/2.
+ 			write "outer loop: aa=".
+ 			write aa.
+ 			g = (aa%2==0).
+ 			val = val-1.
+ 			while (val > 0){
+ 			int aa = val/5.
+ 			write "inner loop: aa=".
+ 			write aa.
+ 			val = 0.
+ 			}.
+ 			write "outer loop after inner loop: aa=".
+ 			write aa.
+ 			}.
+ 			: aa.
+ 			}
+			""";
 		int v = 100;
 		Object[] params = {v};
-		Object result = genCodeAndRun(input,"",params);
+		int result = (int) genCodeAndRun(input,"",params);
+		assertEquals(v, (Integer)result);
+
 	}
 }

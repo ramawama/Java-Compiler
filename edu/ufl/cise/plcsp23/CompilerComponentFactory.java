@@ -13,6 +13,10 @@ package edu.ufl.cise.plcsp23;
 
 import edu.ufl.cise.plcsp23.ast.ASTVisit;
 import edu.ufl.cise.plcsp23.ast.ASTVisitor;
+import edu.ufl.cise.plcsp23.javaCompilerClassLoader.DynamicClassLoader;
+import edu.ufl.cise.plcsp23.javaCompilerClassLoader.DynamicCompiler;
+import edu.ufl.cise.plcsp23.javaCompilerClassLoader.StringJavaFileObject;
+import edu.ufl.cise.plcsp23.ast.CodeGenVisitor;
 
 public class CompilerComponentFactory {
 	public static IScanner makeScanner(String input) {
@@ -32,8 +36,9 @@ public class CompilerComponentFactory {
 		ASTVisitor visitor = new ASTVisit();
 		return visitor; //not sure if this is correct
 	}
-	public static ASTVisitor makeCodeGenerator(String package) {
-		//code to instantiate a return an ASTVisitor for code generation }
+	public static CodeGenVisitor makeCodeGenerator(String packagename) {
+		CodeGenVisitor visitor = new CodeGenVisitor();
+		return visitor;
 	}
 }
 
