@@ -2,16 +2,16 @@ package edu.ufl.cise.plcsp23.ast;
 
 import edu.ufl.cise.plcsp23.PLCException;
 import edu.ufl.cise.plcsp23.runtime.ConsoleIO;
-import java.io.Console;
-import java.lang.Math.*;
+
 import java.util.List;
 
-import static edu.ufl.cise.plcsp23.IToken.Kind.EXP;
 import static edu.ufl.cise.plcsp23.IToken.Kind;
+import static edu.ufl.cise.plcsp23.IToken.Kind.EXP;
 
 public class CodeGenVisitor implements ASTVisitor {
     StringBuilder prog = new StringBuilder();
-
+    //StringBuilder imports = new StringBuilder();
+    String imports;
     @Override
     public Object visitAssignmentStatement(AssignmentStatement statementAssign, Object arg) throws PLCException {
         StringBuilder state = new StringBuilder();
@@ -157,7 +157,7 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitProgram(Program program, Object arg) throws PLCException {
         StringBuilder clas = new StringBuilder();
-
+        //need to add import statements like consoleIO into the beginning
         prog.append("public static ");
         String type = program.getType().name().toLowerCase();
         if (type.equals("string")){
@@ -172,7 +172,7 @@ public class CodeGenVisitor implements ASTVisitor {
         }
         //visit block
         prog.append("){\n\t\t").append(program.getBlock().visit(this, arg)).append("\n\t}");
-
+        if (imports != null) clas.append(imports).append('\n');
         //if package name != “”, append package name?  logic might have to do with the string passed in compilercomponentfactory, but idk how u would pass a string into a visitor implementation
         clas.append("public class ").append(program.getIdent().getName()).append("{ \n\t").append(prog).append("\n}");
         return clas.toString();
@@ -217,7 +217,9 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitWriteStatement(WriteStatement statementWrite, Object arg) throws PLCException {
         StringBuilder write = new StringBuilder();
-        write.append("System.out.println(").append(statementWrite.getE().visit(this,arg)).append(");\n\t\t"); //this works using system.out.print but i think we r supposed to use ConsoleIO.write
+        write.append("ConsoleIO.write(").append(statementWrite.getE().visit(this,arg)).append(");\n\t\t"); //this works using system.out.print but i think we r supposed to use ConsoleIO.write
+        imports = ("import edu.ufl.cise.plcsp23.runtime.ConsoleIO;");
+        //write.append("System.out.println(").append(statementWrite.getE().visit(this,arg)).append(");\n\t\t"); //this works using system.out.print but i think we r supposed to use ConsoleIO.write
         ConsoleIO.write((String)statementWrite.getE().visit(this,arg));  //should return value associated with ident not ident
         return write;
     }

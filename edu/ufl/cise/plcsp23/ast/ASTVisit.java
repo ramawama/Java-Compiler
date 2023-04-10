@@ -134,8 +134,8 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitIdent(Ident ident, Object arg) throws PLCException {
-        //return ident.getDef().getType();
-        return null;
+        return ident.getDef().getType();
+        //return null;
     }
 
     @Override
@@ -232,9 +232,7 @@ public class ASTVisit implements ASTVisitor{
         Expr prim = unaryExprPostfix.getPrimary();
         PixelSelector pixel = unaryExprPostfix.getPixel();
         ColorChannel color = unaryExprPostfix.getColor();
-        System.out.println("Image time x3?");
         prim.setType( (Type) prim.visit(this,arg));
-        System.out.println("Image time x3?");
         check(pixel != null || color != null, "At least one pixelSelector / ChannelSelector needed");
         if(prim.getType() == Type.PIXEL){
             check(pixel == null && color != null,"Pixel selector must be null and Channel must be present");
@@ -372,6 +370,7 @@ public class ASTVisit implements ASTVisitor{
             check(nameDef.getType().equals(Type.IMAGE),"Type must equal image if dimension is declared");
             visitDimension(nameDef.getDimension(),arg);
         }
+        System.out.println(nameDef.getType().name()+ " aw");
         check(symbolTable.insert(nameDef.getIdent().getName(),nameDef) , "Name already declared");
         //if false already present
 
