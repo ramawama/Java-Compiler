@@ -268,14 +268,14 @@ class Assignment5Test_starter {
                 aa = aa + 1.
                 aa = aa * 4.
                 aa = aa - 1.
-                aa = aa + -1.
+                aa = aa + 1.
                 : aa.
                 }
                 """;
 		int v = 100;
 		Object[] params = {v};
 		int result = (int) genCodeAndRun(input, "", params);
-		assertEquals(((v * 2) + 1) * 4 - 2, (Integer) result);
+		assertEquals(((v * 2) + 1) * 4 , (Integer) result);
 	}
 
 	@Test

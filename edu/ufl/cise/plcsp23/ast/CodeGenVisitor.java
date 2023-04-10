@@ -12,6 +12,7 @@ public class CodeGenVisitor implements ASTVisitor {
     StringBuilder prog = new StringBuilder();
     //StringBuilder imports = new StringBuilder();
     String imports;
+    boolean logic = false;
     @Override
     public Object visitAssignmentStatement(AssignmentStatement statementAssign, Object arg) throws PLCException {
         StringBuilder state = new StringBuilder();
@@ -28,7 +29,8 @@ public class CodeGenVisitor implements ASTVisitor {
         bin.append("(");
         if(binaryExpr.op == EXP){
             isEXP = true;
-            bin.append("Math.pow(");
+            imports = ("import java.lang.Math;");
+            bin.append("(int) Math.pow(");
         }
         bin.append(left);
         if(isEXP) bin.append(",");
@@ -45,14 +47,20 @@ public class CodeGenVisitor implements ASTVisitor {
             case GT -> bin.append(">");
             case BITOR -> bin.append("|");
             case BITAND -> bin.append("&");
-            case OR -> bin.append("||");
-            case AND -> bin.append("&&");
+            case OR -> bin.append("!=0) || (");
+            case AND -> bin.append("!=0) && (");
         }
         bin.append(right);
         //handles boolean vs int
-        if(binaryExpr.op == Kind.GE || binaryExpr.op == Kind.LE || binaryExpr.op == Kind.LT || binaryExpr.op == Kind.GT || binaryExpr.op == Kind.EQ){
+        if(binaryExpr.op == Kind.GE || binaryExpr.op == Kind.LE || binaryExpr.op == Kind.LT || binaryExpr.op == Kind.GT || binaryExpr.op == Kind.EQ ){
             bin.append("? 1 : 0)");
+        }else if (binaryExpr.op == Kind.AND || binaryExpr.op == Kind.OR){ //come back to this
+            logic = true;
+            bin.append("!=0)");
         }else{
+            bin.append(")");
+        }
+        if(binaryExpr.op == EXP){
             bin.append(")");
         }
         return bin;
@@ -77,7 +85,11 @@ public class CodeGenVisitor implements ASTVisitor {
         StringBuilder cond = new StringBuilder();
         Object expr0 = conditionalExpr.getGuard().visit(this, arg);
         cond.append("(");
-        cond.append("(").append(expr0).append("!=0)");   // !=0 handles boolean vs int, same in while
+        if(logic){
+            cond.append(expr0);
+        }else{
+            cond.append("(").append(expr0).append("!=0)");  // !=0 handles boolean vs int, same in while
+        }
         cond.append(" ? ");
         cond.append(conditionalExpr.getTrueCase().visit(this, arg));
         cond.append(" : ");
@@ -92,6 +104,8 @@ public class CodeGenVisitor implements ASTVisitor {
         dec.append(declaration.getNameDef().visit(this, arg));
         if(declaration.getInitializer() != null){
             dec.append(" = ").append(declaration.getInitializer().visit(this, arg)).append(";\n\t\t");
+        }else{
+            dec.append(";\n\t\t");
         }
         return dec;
     }
@@ -136,6 +150,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCException {
+        ConsoleIO.write(numLitExpr.getValue());
         return numLitExpr.getValue();
     }
 
@@ -180,7 +195,8 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitRandomExpr(RandomExpr randomExpr, Object arg) throws PLCException {
-        return Math.floor(Math.random() * 256);
+        int rand = (int)Math.floor(Math.random() * 256);
+        return rand;
     }
 
     @Override
@@ -220,7 +236,7 @@ public class CodeGenVisitor implements ASTVisitor {
         write.append("ConsoleIO.write(").append(statementWrite.getE().visit(this,arg)).append(");\n\t\t"); //this works using system.out.print but i think we r supposed to use ConsoleIO.write
         imports = ("import edu.ufl.cise.plcsp23.runtime.ConsoleIO;");
         //write.append("System.out.println(").append(statementWrite.getE().visit(this,arg)).append(");\n\t\t"); //this works using system.out.print but i think we r supposed to use ConsoleIO.write
-        ConsoleIO.write((String)statementWrite.getE().visit(this,arg));  //should return value associated with ident not ident
+        //ConsoleIO.write();  //should return value associated with ident not ident
         return write;
     }
 
