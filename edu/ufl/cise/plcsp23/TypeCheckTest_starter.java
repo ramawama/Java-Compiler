@@ -259,6 +259,32 @@ class TypeCheckTest_starter {
 				""";
 		typeCheckError(input);
 	}
+	@Test void RamaTest() throws PLCException {
+		String input = """
+ 			int testWhile(int val){
+			int aa = val.
+ 			int g = aa.
+ 			write val.
+ 			while (g > 0) {
+ 			int aa = val/2.
+ 			write "outer loop: aa=".
+ 			write aa.
+ 			g = (aa%2==0).
+ 			val = val-1.
+ 			while (val > 0){
+ 			int aa = val/5.
+ 			write "inner loop: aa=".
+ 			write aa.
+ 			val = 0.
+ 			}.
+ 			write "outer loop after inner loop: aa=".
+ 			write aa.
+ 			}.
+ 			: aa.
+ 			}
+			""";
+		typeCheck(input);
+	}
 	@Test
 	void andSimpleProgram() throws PLCException {
 		String input = """

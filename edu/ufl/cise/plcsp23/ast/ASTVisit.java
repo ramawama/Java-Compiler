@@ -3,62 +3,67 @@ package edu.ufl.cise.plcsp23.ast;
 import edu.ufl.cise.plcsp23.PLCException;
 import edu.ufl.cise.plcsp23.TypeCheckException;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Stack;
 
 
 public class ASTVisit implements ASTVisitor{
 
-    public static class SymbolTable {
-        private boolean startScope;
-        static Type progType;
-        private int currScope;
-        private String name;
-        private NameDef nameDef;
-        Vector<NameDef> parameters = new Vector<>();
-        Stack<Object> sStack = new Stack<>(); // for authentication in declaring and initializing in same expression @test8
-        HashMap<String, NameDef> entries = new HashMap<>(); //changed to namedef
-        Stack<HashMap<String, NameDef>> scopeMap = new Stack<>();
-
-        public boolean insert(String name, NameDef namedef){
-            this.name = name;
-            //scopeMap.putIfAbsent(name, currScope);
-            this.nameDef = namedef;
-            if (currScope > 0){
-//                for(NameDef names: parameters){
-//                    if(names == namedef) return true;
-//                }
-                return (scopeMap.peek().putIfAbsent(name,namedef) == null);
-            }
-
-
-            return (entries.putIfAbsent(name, namedef)==null);
+    public static class SymbolTable { //leBlanc
+        NameDef currDec;
+        int current,next;
+        Type progType;
+        Stack<Integer> scope;
+        HashMap<String,HashMap<Integer,NameDef>> table;
+        public SymbolTable() {
+            //constructor
+            currDec = null;
+            progType = null;
+            current = 0;
+            next = 1;
+            scope = new Stack<>();
+            scope.push(current);
+            table = new HashMap<>();
         }
-
-        public NameDef lookup(String name) {
-            if (currScope > 0){
-                for(NameDef names: parameters){
-                    if(names.getIdent().getName().equals(name)){
-                        return names;
-                    }
+        public boolean insert(String name, NameDef nameDef){
+            if(table.containsKey(name)){ //checks for scope as well
+                if(!table.get(name).containsKey(scope.peek())){ // if the table doesnt contain name for current stack add
+                    table.get(name).put(scope.peek(),nameDef);
+                    return true;
                 }
-                return scopeMap.peek().get(name);
+                else return false;
             }
-            return entries.get(name);
+            //else
+            HashMap<Integer,NameDef> value = new HashMap<>();
+            value.put(scope.peek(),nameDef);
+            table.put(name,value);
+            return true;
         }
-
-        public void enterScope(){
-            currScope++;
-
-            startScope = true;
-            scopeMap.push(new HashMap<>());
-
+        public NameDef lookup(String name){
+            if(!table.containsKey(name)) return null;
+            HashMap<Integer,NameDef> currScope = table.get(name);
+            //scan chain—entries whose serial number is in the scope stack are visible.
+            //Return entry with with serial number closest to the top of the scopestack.
+            //If none, this is an error—the name is not bound in the current scope.
+            int max = -1;
+            NameDef ret = null;
+            for (Integer scope: currScope.keySet()){
+                //key iterator
+                int temp = this.scope.indexOf(scope);
+                if(this.scope.contains(scope) && temp > max){
+                    max = temp;
+                    ret = currScope.get(scope);
+                }
+            }
+            return ret;
         }
-        public void leaveScope(){
-            //entries.remove(name);
-            currScope--;
-
-            startScope = false;
-            scopeMap.pop();
+        void enter(){
+            current = next++;
+            scope.push(current);
+        }
+        void leave(){
+            current = scope.pop();
         }
     }
 
@@ -97,7 +102,7 @@ public class ASTVisit implements ASTVisitor{
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCException { //fix check!! - R
         NameDef nameDef = declaration.getNameDef();
         nameDef.visit(this,arg); //ensures nameDef is properly typed
-
+        symbolTable.currDec = nameDef;
         Expr init = declaration.getInitializer();
         if(nameDef.getType() == Type.IMAGE)
             check(init != null || nameDef.dimension != null , "Type image must have initializer or dimension");
@@ -108,6 +113,7 @@ public class ASTVisit implements ASTVisitor{
             ///check(!symbolTable.sStack.peek().equals(init) || !nameDef.initialized,"Initializer cannot refer to name being defined" );
 
         }
+        symbolTable.currDec = null;
         return null;
     }
 
@@ -200,7 +206,6 @@ public class ASTVisit implements ASTVisitor{
         for(Declaration dList: decList){
             dList.visit(this, arg);
         }
-        symbolTable.sStack.push(null);
         List<Statement> stateList = block.getStatementList();
         for(Statement sList: stateList){
             sList.visit(this, arg);
@@ -253,15 +258,11 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitWhileStatement(WhileStatement whileStatement, Object arg) throws PLCException {
-        symbolTable.enterScope();
         Type e = (Type) whileStatement.getGuard().visit(this, arg);
         check(e == Type.INT, "Type is not an int");
-
+        symbolTable.enter();
         whileStatement.getBlock().visit(this, arg);
-
-        symbolTable.leaveScope();
-
-
+        symbolTable.leave();
         return null;
     }
 
@@ -308,7 +309,6 @@ public class ASTVisit implements ASTVisitor{
 
         for (int i = 0; i < program.getParamList().size(); i++){ //visits namedef
             visitNameDef(program.getParamList().get(i),arg);
-            symbolTable.parameters.add((NameDef)symbolTable.sStack.peek());
         }
 //        Iterator hmIter = symbolTable.entries.entrySet().iterator();
 //        while(hmIter.hasNext()){
@@ -323,17 +323,13 @@ public class ASTVisit implements ASTVisitor{
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCException {
-        if(symbolTable.startScope == true){
-            symbolTable.scopeMap.peek().put(identExpr.getName(),symbolTable.entries.get(identExpr.getName()));
-            symbolTable.startScope = false;
-        }
         NameDef checker = symbolTable.lookup(identExpr.getName());
         check(!(checker == null),"Undefined variable");
-
-        if(symbolTable.sStack.peek() != null){
-            check(!symbolTable.sStack.peek().equals(checker) || !checker.initialized,"Initializer cannot refer to name being defined" );
-        }
-            return checker.getType();
+        check(checker != symbolTable.currDec,"Cannot refer to object being initialized");
+//        if(symbolTable.sStack.peek() != null){
+//            check(!symbolTable.sStack.peek().equals(checker) || !checker.initialized,"Initializer cannot refer to name being defined" );
+//        }
+        return checker.getType();
     }
 
     @Override
@@ -356,9 +352,9 @@ public class ASTVisit implements ASTVisitor{
         }else if(def.getType() == Type.INT){
             if(pixel == null && color == null){result = Type.INT;}
         }
-        if(symbolTable.sStack.peek() != null)
-            check(!symbolTable.sStack.peek().equals(ident.getDef()), "Not visible in scope");
-        check(symbolTable.entries.containsKey(ident.getName()),"Ident has not been declared / not visible");
+//        if(symbolTable.sStack.peek() != null)
+//            check(!symbolTable.sStack.peek().equals(ident.getDef()), "Not visible in scope");
+        check(symbolTable.table.containsKey(ident.getName()),"Ident has not been declared / not visible"); //change to lookuo
         return result;
         //return ident.def.getType();
     }
@@ -370,11 +366,11 @@ public class ASTVisit implements ASTVisitor{
             check(nameDef.getType().equals(Type.IMAGE),"Type must equal image if dimension is declared");
             visitDimension(nameDef.getDimension(),arg);
         }
-        System.out.println(nameDef.getType().name()+ " aw");
+        //System.out.println(nameDef.getType().name()+ " aw");
         check(symbolTable.insert(nameDef.getIdent().getName(),nameDef) , "Name already declared");
         //if false already present
 
-        symbolTable.sStack.push(nameDef);
+        //symbolTable.sStack.push(nameDef);
         return null;
     }
 
