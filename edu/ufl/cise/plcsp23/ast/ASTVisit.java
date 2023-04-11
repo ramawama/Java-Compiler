@@ -366,6 +366,7 @@ public class ASTVisit implements ASTVisitor{
             check(nameDef.getType().equals(Type.IMAGE),"Type must equal image if dimension is declared");
             visitDimension(nameDef.getDimension(),arg);
         }
+
         //System.out.println(nameDef.getType().name()+ " aw");
         check(symbolTable.insert(nameDef.getIdent().getName(),nameDef) , "Name already declared");
         //if false already present

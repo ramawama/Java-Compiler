@@ -144,6 +144,7 @@ public class CodeGenVisitor implements ASTVisitor {
         if (type.equals("string")){
             type = "String";
         }
+
         name.append(type).append(" ").append(nameDef.getIdent().getName());
         return name;
     }
