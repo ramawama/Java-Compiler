@@ -10,13 +10,21 @@ import static edu.ufl.cise.plcsp23.IToken.Kind.EXP;
 
 public class CodeGenVisitor implements ASTVisitor {
     StringBuilder prog = new StringBuilder();
-    //StringBuilder imports = new StringBuilder();
     String imports;
     boolean logic = false;
+    boolean inReturn = false;
+    boolean ifString = false;
+    boolean isNameString = false;
     @Override
     public Object visitAssignmentStatement(AssignmentStatement statementAssign, Object arg) throws PLCException {
         StringBuilder state = new StringBuilder();
-        state.append(statementAssign.getLv().visit(this, arg)).append(" = ").append(statementAssign.getE().visit(this, arg)).append(";\n\t\t");
+        state.append(statementAssign.getLv().visit(this, arg)).append(" = ");
+        if(statementAssign.getE().firstToken.getKind() == Kind.NUM_LIT && isNameString){
+            state.append("\"").append(statementAssign.getE().visit(this, arg)).append("\"");
+        }else{
+            state.append(statementAssign.getE().visit(this, arg));
+        }
+        state.append(";\n\t\t");
         return state;
     }
 
@@ -31,6 +39,9 @@ public class CodeGenVisitor implements ASTVisitor {
             isEXP = true;
             imports = ("import java.lang.Math;");
             bin.append("(int) Math.pow(");
+        }
+        if ((binaryExpr.op == Kind.AND || binaryExpr.op == Kind.OR) && !inReturn){
+            bin.append("(");
         }
         bin.append(left);
         if(isEXP) bin.append(",");
@@ -49,14 +60,18 @@ public class CodeGenVisitor implements ASTVisitor {
             case BITAND -> bin.append("&");
             case OR -> bin.append("!=0) || (");
             case AND -> bin.append("!=0) && (");
+
         }
         bin.append(right);
         //handles boolean vs int
         if(binaryExpr.op == Kind.GE || binaryExpr.op == Kind.LE || binaryExpr.op == Kind.LT || binaryExpr.op == Kind.GT || binaryExpr.op == Kind.EQ ){
             bin.append("? 1 : 0)");
-        }else if (binaryExpr.op == Kind.AND || binaryExpr.op == Kind.OR){ //come back to this
+        }else if (binaryExpr.op == Kind.AND || binaryExpr.op == Kind.OR){
             logic = true;
             bin.append("!=0)");
+            if(!inReturn){
+                bin.append("? 1 : 0)");
+            }
         }else{
             bin.append(")");
         }
@@ -102,9 +117,20 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCException {
         StringBuilder dec = new StringBuilder();
         dec.append(declaration.getNameDef().visit(this, arg));
+        if(declaration.getNameDef().getType() == Type.STRING){
+            isNameString = true;
+        }
         if(declaration.getInitializer() != null){
-            dec.append(" = ").append(declaration.getInitializer().visit(this, arg)).append(";\n\t\t");
+            dec.append(" = ");
+            if(declaration.getNameDef().getType() == Type.STRING && declaration.getInitializer().firstToken.getKind() == Kind.NUM_LIT) {
+                dec.append("\"").append(declaration.getInitializer().visit(this, arg)).append("\";\n\t\t");
+            }else{
+                dec.append(declaration.getInitializer().visit(this, arg)).append(";\n\t\t");
+            }
         }else{
+            if(declaration.getNameDef().getType() == Type.STRING ) {
+                isNameString = true;
+            }
             dec.append(";\n\t\t");
         }
         return dec;
@@ -142,16 +168,16 @@ public class CodeGenVisitor implements ASTVisitor {
         StringBuilder name  = new StringBuilder();
         String type = nameDef.getType().name().toLowerCase();
         if (type.equals("string")){
+            isNameString = true;
             type = "String";
         }
-
         name.append(type).append(" ").append(nameDef.getIdent().getName());
         return name;
     }
 
     @Override
     public Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCException {
-        ConsoleIO.write(numLitExpr.getValue());
+        //ConsoleIO.write(numLitExpr.getValue());
         return numLitExpr.getValue();
     }
 
@@ -177,6 +203,7 @@ public class CodeGenVisitor implements ASTVisitor {
         prog.append("public static ");
         String type = program.getType().name().toLowerCase();
         if (type.equals("string")){
+            ifString = true;
             type = "String";
         }
         prog.append(type).append(" apply(");
@@ -202,8 +229,17 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCException {
+        inReturn = true;
         StringBuilder ret = new StringBuilder();
-        ret.append("return ").append(returnStatement.getE().visit(this, arg)).append(";");
+        ret.append("return ");
+        if(ifString && returnStatement.getE().firstToken.getKind() == Kind.NUM_LIT ){
+            ret.append("\"");
+        }
+        ret.append(returnStatement.getE().visit(this, arg));
+        if(ifString && returnStatement.getE().firstToken.getKind() == Kind.NUM_LIT ){
+            ret.append("\"");
+        }
+        ret.append(";");
         return ret.toString();
     }
 
@@ -234,9 +270,8 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitWriteStatement(WriteStatement statementWrite, Object arg) throws PLCException {
         StringBuilder write = new StringBuilder();
-        write.append("ConsoleIO.write(").append(statementWrite.getE().visit(this,arg)).append(");\n\t\t"); //this works using system.out.print but i think we r supposed to use ConsoleIO.write
+        write.append("ConsoleIO.write(").append(statementWrite.getE().visit(this,arg)).append(");\n\t\t");
         imports = ("import edu.ufl.cise.plcsp23.runtime.ConsoleIO;");
-        //write.append("System.out.println(").append(statementWrite.getE().visit(this,arg)).append(");\n\t\t"); //this works using system.out.print but i think we r supposed to use ConsoleIO.write
         //ConsoleIO.write();  //should return value associated with ident not ident
         return write;
     }
