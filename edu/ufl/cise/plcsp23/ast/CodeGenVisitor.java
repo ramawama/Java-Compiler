@@ -1,8 +1,8 @@
 package edu.ufl.cise.plcsp23.ast;
 
 import edu.ufl.cise.plcsp23.PLCException;
-import edu.ufl.cise.plcsp23.runtime.ConsoleIO;
 
+import java.util.HashMap;
 import java.util.List;
 
 import static edu.ufl.cise.plcsp23.IToken.Kind;
@@ -15,6 +15,19 @@ public class CodeGenVisitor implements ASTVisitor {
     boolean inReturn = false;
     boolean ifString = false;
     boolean isNameString = false;
+    ASTVisit.SymbolTable symbolTable = new ASTVisit.SymbolTable();
+    private Integer instances(String name){
+        if (symbolTable.table.containsKey(name)){
+            HashMap<Integer,NameDef> temp = symbolTable.table.get(name);
+            int checker = 0;
+            for(Integer scope: temp.keySet()){
+                if(scope <= symbolTable.scope.peek()) checker++;
+            }
+            return checker;
+        }
+        return 0;
+    }
+
     @Override
     public Object visitAssignmentStatement(AssignmentStatement statementAssign, Object arg) throws PLCException {
         StringBuilder state = new StringBuilder();
@@ -117,6 +130,7 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCException {
         StringBuilder dec = new StringBuilder();
         dec.append(declaration.getNameDef().visit(this, arg));
+        //symbolTable.declared.put(declaration.getNameDef().getIdent().getName().concat("_"+symbolTable.scope.peek().toString()),declaration.getNameDef());
         if(declaration.getNameDef().getType() == Type.STRING){
             isNameString = true;
         }
@@ -153,14 +167,20 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCException {
-        return identExpr.getName();
+        NameDef temp = symbolTable.lookup(identExpr.getName());
+        if (temp == null)
+            return identExpr.getName();
+        else return temp.getIdent().getName().concat("_"+instances(identExpr.getName()).toString());
     }
 
     @Override
     public Object visitLValue(LValue lValue, Object arg) throws PLCException {
         PixelSelector px = lValue.getPixelSelector();
         ColorChannel color =  lValue.getColor();
-        return lValue.getIdent().getName();
+        NameDef temp = symbolTable.lookup(lValue.getIdent().getName());
+        if (temp == null)
+            return lValue.getIdent().getName();
+        else return temp.getIdent().getName().concat("_"+instances(lValue.getIdent().getName()).toString());
     }
 
     @Override
@@ -171,7 +191,12 @@ public class CodeGenVisitor implements ASTVisitor {
             isNameString = true;
             type = "String";
         }
-        name.append(type).append(" ").append(nameDef.getIdent().getName());
+        symbolTable.insert(nameDef.getIdent().getName(),nameDef);
+        NameDef temp = symbolTable.lookup(nameDef.getIdent().getName());
+        if (temp == null)
+            name.append(type).append(" ").append(nameDef.getIdent().getName());
+        else name.append(type).append(" ").append(temp.getIdent().getName()).append("_"+instances(nameDef.getIdent().getName()).toString());
+        //else
         return name;
     }
 
@@ -264,7 +289,9 @@ public class CodeGenVisitor implements ASTVisitor {
         StringBuilder wile = new StringBuilder();
         Object guard = whileStatement.getGuard().visit(this,arg);
         wile.append("while((").append(guard).append("!=0)) {\n\t\t\t");
+        symbolTable.enter();
         wile.append(whileStatement.getBlock().visit(this,arg)).append("\t\t}\n\t\t");
+        symbolTable.leave();
         return wile;
     }
 

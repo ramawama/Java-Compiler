@@ -16,6 +16,7 @@ public class ASTVisit implements ASTVisitor{
         Type progType;
         Stack<Integer> scope;
         HashMap<String,HashMap<Integer,NameDef>> table;
+        HashMap<String,NameDef> declared;
         public SymbolTable() {
             //constructor
             currDec = null;
@@ -25,6 +26,7 @@ public class ASTVisit implements ASTVisitor{
             scope = new Stack<>();
             scope.push(current);
             table = new HashMap<>();
+            declared = new HashMap<>();
         }
         public boolean insert(String name, NameDef nameDef){
             if(table.containsKey(name)){ //checks for scope as well
@@ -58,6 +60,7 @@ public class ASTVisit implements ASTVisitor{
             }
             return ret;
         }
+
         void enter(){
             current = next++;
             scope.push(current);
