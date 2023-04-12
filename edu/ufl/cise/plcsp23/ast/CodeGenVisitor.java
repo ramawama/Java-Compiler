@@ -223,7 +223,8 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitRandomExpr(RandomExpr randomExpr, Object arg) throws PLCException {
-        int rand = (int)Math.floor(Math.random() * 256);
+        imports = ("import java.lang.Math;");
+        String rand = "(int)Math.floor(Math.random() * 256)";
         return rand;
     }
 
