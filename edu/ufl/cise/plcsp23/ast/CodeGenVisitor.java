@@ -83,6 +83,7 @@ public class CodeGenVisitor implements ASTVisitor {
             logic = true;
             bin.append("!=0)");
             if(!inReturn){
+                logic = false;
                 bin.append("? 1 : 0)");
             }
         }else{
@@ -135,10 +136,14 @@ public class CodeGenVisitor implements ASTVisitor {
             isNameString = true;
         }
         if(declaration.getInitializer() != null){
+            NameDef type = symbolTable.lookup(declaration.getInitializer().firstToken.getTokenString());
             dec.append(" = ");
             if(declaration.getNameDef().getType() == Type.STRING && declaration.getInitializer().firstToken.getKind() == Kind.NUM_LIT) {
                 dec.append("\"").append(declaration.getInitializer().visit(this, arg)).append("\";\n\t\t");
-            }else{
+            }else if (type != null && declaration.getNameDef().getType() == Type.STRING && type.getType() == Type.INT){
+                dec.append("Integer.toString(").append(declaration.getInitializer().visit(this,arg)). append(");\n\t\t");
+            }
+            else{
                 dec.append(declaration.getInitializer().visit(this, arg)).append(";\n\t\t");
             }
         }else{
@@ -256,12 +261,20 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCException {
         inReturn = true;
+        NameDef type = symbolTable.lookup(returnStatement.getE().firstToken.getTokenString());
         StringBuilder ret = new StringBuilder();
         ret.append("return ");
+        if(type != null && ifString && type.getType() == Type.INT){
+            imports = "import java.lang.String;";
+            ret.append("Integer.toString(");
+        }
         if(ifString && returnStatement.getE().firstToken.getKind() == Kind.NUM_LIT ){
             ret.append("\"");
         }
         ret.append(returnStatement.getE().visit(this, arg));
+        if(type != null && ifString && type.getType() == Type.INT){
+            ret.append(")");
+        }
         if(ifString && returnStatement.getE().firstToken.getKind() == Kind.NUM_LIT ){
             ret.append("\"");
         }
