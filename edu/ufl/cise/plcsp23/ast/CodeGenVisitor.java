@@ -15,14 +15,18 @@ public class CodeGenVisitor implements ASTVisitor {
     boolean inReturn = false;
     boolean ifString = false;
     boolean isNameString = false;
+    boolean isMinus = false;
+
     ASTVisit.SymbolTable symbolTable = new ASTVisit.SymbolTable();
     private Integer instances(String name){
         if (symbolTable.table.containsKey(name)){
             HashMap<Integer,NameDef> temp = symbolTable.table.get(name);
-            int checker = 0;
+            int checker = -1;
             for(Integer scope: temp.keySet()){
                 if(scope <= symbolTable.scope.peek()) checker++;
             }
+            if (isMinus ) checker--;
+            if (checker < 0) return 0;
             return checker;
         }
         return 0;
@@ -104,7 +108,10 @@ public class CodeGenVisitor implements ASTVisitor {
         }
         List<Statement> stateList = block.getStatementList();
         for(Statement sList: stateList){
+            if (sList.getClass() == ReturnStatement.class && decList.size() == 0 && symbolTable.current > 1)isMinus = true;
+            if (sList.getClass() == AssignmentStatement.class && decList.size() == 0 && symbolTable.current > 1)isMinus = true;
             b.append(sList.visit(this, arg));
+            isMinus = false;
         }
         return b;
     }
@@ -175,17 +182,28 @@ public class CodeGenVisitor implements ASTVisitor {
         NameDef temp = symbolTable.lookup(identExpr.getName());
         if (temp == null)
             return identExpr.getName();
-        else return temp.getIdent().getName().concat("_"+instances(identExpr.getName()).toString());
+        else{
+            int tempi= instances(identExpr.getName().toString());
+            return temp.getIdent().getName().concat("_"+tempi);
+        }
     }
 
     @Override
     public Object visitLValue(LValue lValue, Object arg) throws PLCException {
         PixelSelector px = lValue.getPixelSelector();
         ColorChannel color =  lValue.getColor();
+        //if (symbolTable.current > 1) isMinus = true;
+
         NameDef temp = symbolTable.lookup(lValue.getIdent().getName());
-        if (temp == null)
+        if (temp == null){
+            isMinus = false;
             return lValue.getIdent().getName();
-        else return temp.getIdent().getName().concat("_"+instances(lValue.getIdent().getName()).toString());
+        }
+        else{
+            String ret = temp.getIdent().getName().concat("_"+instances(lValue.getIdent().getName()).toString());
+            isMinus = false;
+            return ret;
+        }
     }
 
     @Override
@@ -239,10 +257,12 @@ public class CodeGenVisitor implements ASTVisitor {
         prog.append(type).append(" apply(");
         //visit parameters
         int i = 1;
+
         for(NameDef params: program.getParamList()){
             prog.append(params.visit(this, arg));
             if(i++ != program.getParamList().size()){ prog.append(", "); }
         }
+
         //visit block
         prog.append("){\n\t\t").append(program.getBlock().visit(this, arg)).append("\n\t}");
         if (imports != null) clas.append(imports).append('\n');
@@ -271,7 +291,13 @@ public class CodeGenVisitor implements ASTVisitor {
         if(ifString && returnStatement.getE().firstToken.getKind() == Kind.NUM_LIT ){
             ret.append("\"");
         }
+
+        /**
+         * I think the below solution works as intended meant to solve cg46 test case
+         */
+
         ret.append(returnStatement.getE().visit(this, arg));
+
         if(type != null && ifString && type.getType() == Type.INT){
             ret.append(")");
         }
