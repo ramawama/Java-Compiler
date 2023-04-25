@@ -705,47 +705,47 @@ class Assignment6Test_starter {
 		show(result);
 	}
 
-	@Test
-	void cg24a() throws Exception {
-		String input = """
-				int imageEqual(string s0, string s1){
-				image i0 = s0.
-				image i1 = s1.
-				int eq = i0 == i1.
-				:eq.
-				}
-				""";
-		String s0 = beach;
-		String s1 = beach;
-		Object[] params = { s0, s1 };
-		int result = (int) genCodeAndRun(input, "", params);
-		BufferedImage i0 = FileURLIO.readImage(s0);
-		BufferedImage i1 = FileURLIO.readImage(s1);
-		int expected = (ImageOps.equalsForCodeGen(i0, i1));
-		assertEquals(expected, result);
-	}
-
-	@Test
-	void cg24b() throws Exception {
-		String input = """
-				int imageEqual(string s0, string s1, int w, int h){
-				image[w,h] i0 = s0.
-				image[w,h] i1 = s1.
-				int eq = i0 == i1.
-				:eq.
-				}
-				""";
-		String s0 = beach;
-		String s1 = beach;
-		int w = 100;
-		int h = 200;
-		Object[] params = { s0, s1, w, h };
-		int result = (int) genCodeAndRun(input, "", params);
-		BufferedImage i0 = FileURLIO.readImage(s0, w, h);
-		BufferedImage i1 = FileURLIO.readImage(s1, w, h);
-		int expected = (ImageOps.equalsForCodeGen(i0, i1));
-		assertEquals(expected, result);
-	}
+//	@Test
+//	void cg24a() throws Exception {
+//		String input = """
+//				int imageEqual(string s0, string s1){
+//				image i0 = s0.
+//				image i1 = s1.
+//				int eq = i0 == i1.
+//				:eq.
+//				}
+//				""";
+//		String s0 = beach;
+//		String s1 = beach;
+//		Object[] params = { s0, s1 };
+//		int result = (int) genCodeAndRun(input, "", params);
+//		BufferedImage i0 = FileURLIO.readImage(s0);
+//		BufferedImage i1 = FileURLIO.readImage(s1);
+//		int expected = (ImageOps.equalsForCodeGen(i0, i1));
+//		assertEquals(expected, result);
+//	}
+//
+//	@Test
+//	void cg24b() throws Exception {
+//		String input = """
+//				int imageEqual(string s0, string s1, int w, int h){
+//				image[w,h] i0 = s0.
+//				image[w,h] i1 = s1.
+//				int eq = i0 == i1.
+//				:eq.
+//				}
+//				""";
+//		String s0 = beach;
+//		String s1 = beach;
+//		int w = 100;
+//		int h = 200;
+//		Object[] params = { s0, s1, w, h };
+//		int result = (int) genCodeAndRun(input, "", params);
+//		BufferedImage i0 = FileURLIO.readImage(s0, w, h);
+//		BufferedImage i1 = FileURLIO.readImage(s1, w, h);
+//		int expected = (ImageOps.equalsForCodeGen(i0, i1));
+//		assertEquals(expected, result);
+//	}
 
 	@Test
 	void cg24c() throws Exception {

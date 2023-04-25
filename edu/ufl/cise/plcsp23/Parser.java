@@ -176,15 +176,13 @@ public class Parser implements IParser{
 
     private LValue lValue() throws PLCException{
         IToken first = prev;
-
         PixelSelector retPixel = null;
         if (match(Kind.LSQUARE)){ //pixel selector
             retPixel = pixelSelector();
         }
         if (match(Kind.COLON)){ // Channel selector
-            if(current.getKind() != Kind.RES_blu || current.getKind() != Kind.RES_red ||current.getKind() != Kind.RES_grn) throw new SyntaxException("Invalid color");
-
-            return new LValue(first, new Ident(first), retPixel, ColorChannel.getColor(current));
+            if (!match(Kind.RES_red,Kind.RES_blu,Kind.RES_grn)) throw new SyntaxException("Invalid color");
+            else return new LValue(first, new Ident(first), retPixel, ColorChannel.getColor(prev));
         }
         return new LValue(first, new Ident(first), retPixel, null);
     }

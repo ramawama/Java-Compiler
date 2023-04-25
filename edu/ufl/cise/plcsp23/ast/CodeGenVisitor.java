@@ -2,6 +2,7 @@ package edu.ufl.cise.plcsp23.ast;
 
 import edu.ufl.cise.plcsp23.PLCException;
 import edu.ufl.cise.plcsp23.runtime.ImageOps;
+import edu.ufl.cise.plcsp23.runtime.PixelOps;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +19,7 @@ public class CodeGenVisitor implements ASTVisitor {
     boolean ifString = false;
     boolean isNameString = false;
     boolean isMinus = false;
+    boolean checkType = true;
 
     ASTVisit.SymbolTable symbolTable = new ASTVisit.SymbolTable();
     private Integer instances(String name){
@@ -37,31 +39,50 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitAssignmentStatement(AssignmentStatement statementAssign, Object arg) throws PLCException {
         StringBuilder state = new StringBuilder();
-        state.append(statementAssign.getLv().visit(this, arg)).append(" = ");
         NameDef lv = symbolTable.lookup(statementAssign.getLv().getIdent().getName());
         //NameDef e = symbolTable.lookup((String)statementAssign.getE().visit(this, arg));
         //System.out.println(e);
+
         if(lv.getType() == Type.PIXEL){
+            state.append(statementAssign.getLv().visit(this, checkType)).append(" = ");
             state.append("PixelOps.pack(").append(statementAssign.getE().visit(this, arg)).append(")");
         }
         else if(lv.getType() == Type.IMAGE){
             if(statementAssign.getLv().getPixelSelector() == null && statementAssign.getLv().getColor() == null){//check if image
-                ////figure out how to check if right expr is image, pixel, or string
-                /*if(statementAssign.getE().getType() == Type.IMAGE){
+                statementAssign.getE().visit(this,checkType);
+                if(statementAssign.getE().getType() == Type.IMAGE){
                     state.append("ImageOps.copyInto(").append(statementAssign.getE().visit(this, arg)).append(",").append(statementAssign.getLv().visit(this, arg)).append(")");
-                }else if ( statementAssign.getE().getType() == Type.PIXEL){
-                    state.append("ImageOps.setAllPixels(").append(statementAssign.getLv().visit(this, arg)).append(",").append("PixelOps.pack(").append(statementAssign.getE().visit(this, arg)).append("))");
+                    state.append(";\n\t\t");
                 }
-                if(statementAssign.getE().getType() == Type.STRING){
-                    state.append("FileURLIO.readImage(").append(statementAssign.getE().visit(this, arg)).append(")");
-                }*/
+                else if(statementAssign.getE().getType() == Type.PIXEL){
+                    imports.append("import edu.ufl.cise.plcsp23.runtime.PixelOps;\n");
+                    state.append("ImageOps.setAllPixels(").append(statementAssign.getLv().visit(this, arg)).append(",").append("PixelOps.pack(").append(statementAssign.getE().visit(this, arg)).append("))");
+                    state.append(";\n\t\t");
+                }
+                else if(statementAssign.getE().getType() == Type.STRING){
+                    imports.append("import edu.ufl.cise.plcsp23.runtime.FileURLIO;\n");
+                    state.append("ImageOps.copyInto(").append("FileURLIO.readImage(").append(statementAssign.getE().visit(this, arg)).append(")").append(",").append(statementAssign.getLv().visit(this, arg)).append(")");
+                    state.append(";\n\t\t");
+                }
 
             }else if(statementAssign.getLv().getPixelSelector() != null && statementAssign.getLv().getColor() == null){
-                /*state.append("for(int y = 0; y != ").append(lv.getIdent().getName()).append(".getHeight(); y++){\n\t");
-                state.append("for(int x = 0; x != ").append(lv.getIdent().getName()).append(".getWidth(); x++){\n\t");
-                state.append("ImageOps.setRGB(").append(lv.getIdent().getName()).append(",x,y,").append(statementAssign.getE().visit(this,arg)).append(")");*/
+                String nameWInst = lv.getIdent().getName().concat("_").concat(instances(lv.getIdent().getName()).toString());
+                state.append("for(int y = 0; y != ").append(nameWInst).append(".getHeight(); y++){\n\t");
+                state.append("\t\tfor(int x = 0; x != ").append(nameWInst).append(".getWidth(); x++){\n\t");
+                state.append("\t\t\tImageOps.setRGB(").append(nameWInst).append(",x,y,").append(statementAssign.getE().visit(this,arg)).append(")");
+                state.append(";\n\t\t");
+                state.append("\t\t}\n").append("\t\t\t}\n\t\t");
             }else if(statementAssign.getLv().getPixelSelector() != null && statementAssign.getLv().getColor() != null){
-                //loops
+                String nameWInst = lv.getIdent().getName().concat("_").concat(instances(lv.getIdent().getName()).toString());
+                String col = statementAssign.getLv().getColor().toString();
+                col = col.substring(0, 1).toUpperCase() + col.substring(1);
+                String getColor = "PixelOps.".concat("set").concat(col).concat("(ImageOps.getRGB(").concat(nameWInst).concat(",x,y),");
+                String imageOps = "ImageOps.setRGB(".concat(nameWInst).concat(",x,y");
+                state.append("for(int y = 0; y != ").append(nameWInst).append(".getHeight(); y++){\n\t");
+                state.append("\t\tfor(int x = 0; x != ").append(nameWInst).append(".getWidth(); x++){\n\t");
+                state.append("\t\t\t").append(imageOps).append(',').append(getColor).append(statementAssign.getE().visit(this,arg)).append("))");
+                state.append(";\n\t\t");
+                state.append("\t\t}\n").append("\t\t\t}\n\t\t");
             }
         }else {
             if (statementAssign.getE().firstToken.getKind() == Kind.NUM_LIT && isNameString) {
@@ -70,7 +91,6 @@ public class CodeGenVisitor implements ASTVisitor {
                 state.append(statementAssign.getE().visit(this, arg));
             }
         }
-        state.append(";\n\t\t");
         return state;
     }
 
@@ -259,6 +279,7 @@ public class CodeGenVisitor implements ASTVisitor {
         Object expr = expandedPixelExpr.getBluExpr().visit(this, arg);
         Object expr1 = expandedPixelExpr.getGrnExpr().visit(this, arg);
         Object expr2 = expandedPixelExpr.getRedExpr().visit(this, arg);
+        expandedPixelExpr.setType(Type.PIXEL);
         return expr2 +"," + expr1 +","+ expr;
     }
 
@@ -279,6 +300,9 @@ public class CodeGenVisitor implements ASTVisitor {
         if (temp == null) {
             return identExpr.getName();
         }else{
+            if(arg != null) {
+                identExpr.setType(temp.getType());
+            }
             int tempi= instances(identExpr.getName().toString());
             return temp.getIdent().getName().concat("_"+tempi);
         }
@@ -290,7 +314,7 @@ public class CodeGenVisitor implements ASTVisitor {
         ColorChannel color =  lValue.getColor();
         //if (symbolTable.current > 1) isMinus = true;
         NameDef temp = symbolTable.lookup(lValue.getIdent().getName());
-
+        //System.out.println(lValue.getIdent().getDef().getType());
         if (temp == null){
             isMinus = false;
             return lValue.getIdent().getName();
@@ -325,6 +349,7 @@ public class CodeGenVisitor implements ASTVisitor {
         }
         symbolTable.insert(nameDef.getIdent().getName(),nameDef);
         NameDef temp = symbolTable.lookup(nameDef.getIdent().getName());
+
         if (temp == null)
             name.append(type).append(" ").append(nameDef.getIdent().getName());
         else name.append(type).append(" ").append(temp.getIdent().getName()).append("_"+instances(nameDef.getIdent().getName()).toString());
@@ -352,7 +377,9 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitPredeclaredVarExpr(PredeclaredVarExpr predeclaredVarExpr, Object arg) throws PLCException {
-        return "mymom";
+        if(predeclaredVarExpr.getKind() == Kind.RES_y || predeclaredVarExpr.getKind() == Kind.RES_Y) return "y";
+        if(predeclaredVarExpr.getKind() == Kind.RES_x || predeclaredVarExpr.getKind() == Kind.RES_X) return "x";
+        else return "error for rn in predeclaredVarExpr";
     }
 
     @Override
@@ -432,6 +459,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws PLCException {
+        stringLitExpr.setType(Type.STRING);
         return "\"" + stringLitExpr.getValue() + "\"";  //Test doesnt pass if escape sequences r ignored so whtv
     }
 
@@ -449,6 +477,7 @@ public class CodeGenVisitor implements ASTVisitor {
         }
         if(unaryExprPostfix.getPrimary().getType() == Type.IMAGE){
             if(unaryExprPostfix.getPixel() != null && unaryExprPostfix.getColor() == null){
+                System.out.println(unaryExprPostfix.getPixel());
                 unary.append("ImageOps.getRGB(").append(expr).append(",").append(unaryExprPostfix.getPixel().visit(this, arg)).append(")");
             }else if(unaryExprPostfix.getPixel() != null && unaryExprPostfix.getColor() != null){
                 if(unaryExprPostfix.getColor() == ColorChannel.red){
