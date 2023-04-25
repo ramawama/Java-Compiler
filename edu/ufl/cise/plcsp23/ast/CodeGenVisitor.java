@@ -106,6 +106,7 @@ public class CodeGenVisitor implements ASTVisitor {
         boolean isEXP = false;
         Object left = binaryExpr.getLeft().visit(this, checkType);
         Object right = binaryExpr.getRight().visit(this, checkType);
+        System.out.println(left.toString() + ":");
         bin.append("(");
 
         ////need to figure out how to check type of left and right
@@ -495,7 +496,9 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitUnaryExpr(UnaryExpr unaryExpr, Object arg) throws PLCException {
-        return "tumama";
+        StringBuilder unaryE = new StringBuilder();
+        unaryE.append(unaryExpr.e.visit(this,checkType));
+        return unaryE;
     }
 
     @Override
