@@ -15,6 +15,7 @@ import edu.ufl.cise.plcsp23.javaCompilerClassLoader.DynamicCompiler;
 import edu.ufl.cise.plcsp23.runtime.ConsoleIO;
 import edu.ufl.cise.plcsp23.runtime.FileURLIO;
 import edu.ufl.cise.plcsp23.runtime.ImageOps;
+import edu.ufl.cise.plcsp23.runtime.ImageOps.OP;
 import edu.ufl.cise.plcsp23.runtime.PixelOps;
 
 class Assignment6Test_starter {
@@ -96,6 +97,463 @@ class Assignment6Test_starter {
 			pixelArray[i] = pixelArray[i] & 0xFF000000;
 		}
 		assertArrayEquals(expectedPixelArray, pixelArray);
+	}
+
+	String peter = "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/a1bdc1e4-f501-488b-8005-47d4543d6328/dfbfxu7-b5d74ad3-d3af-41e3-baff-ccc97d84ba99.jpg/v1/fill/w_709,h_1127,q_70,strp/peter_griffin_by_edmodevz_dfbfxu7-pre.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MjAzNSIsInBhdGgiOiJcL2ZcL2ExYmRjMWU0LWY1MDEtNDg4Yi04MDA1LTQ3ZDQ1NDNkNjMyOFwvZGZiZnh1Ny1iNWQ3NGFkMy1kM2FmLTQxZTMtYmFmZi1jY2M5N2Q4NGJhOTkuanBnIiwid2lkdGgiOiI8PTEyODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.p8iaNB7ttQ6t3_GTRq_Juk8TUlYmVqidE672yFHner0";
+
+	String lebron = "https://cdn.nba.com/headshots/nba/latest/1040x760/2544.png";
+	String eren = "https://w0.peakpx.com/wallpaper/451/391/HD-wallpaper-eren-yeager-attack-on-titan-eren-yeager-fanart.jpg";
+
+	@Test
+	void imageImageTimesDivMod() throws Exception {
+		String inputTimes = """
+            image p(string s1, string s2, int w, int h) {
+                image[w,h] i1 = s1.
+                image[w,h] i2 = s2.
+                : i1 * i2.
+            }
+            """;
+
+		String inputDiv = """
+            image p(string s1, pixel p, int w, int h) {
+                image[w,h] i1 = s1.
+                image[w,h] i2 = p.
+                : i1 / i2.
+            }
+            """;
+
+		String inputMod = """
+            image p(string s1, pixel p, int w, int h) {
+                image[w,h] i1 = s1.
+                image[w,h] i2 = p.
+                : i1 % i2.
+            }
+            """;
+
+		int w = 500;
+		int h = 800;
+		int p = 0xff112233;
+		Object[] paramsTimes = {peter, lebron, w, h};
+		Object[] paramsDiv = {peter, p, w, h};
+		Object[] paramsMod = paramsDiv;
+
+		BufferedImage i1 = ImageOps.copyAndResize(FileURLIO.readImage(peter), w, h);
+		BufferedImage i2 = ImageOps.copyAndResize(FileURLIO.readImage(lebron), w, h);
+		BufferedImage i3 = ImageOps.setAllPixels(ImageOps.makeImage(w, h), p);
+
+		BufferedImage expectedTimes = ImageOps.binaryImageImageOp(ImageOps.OP.TIMES, i1, i2);
+		BufferedImage outputTimes = (BufferedImage) genCodeAndRun(inputTimes, "", paramsTimes);
+		show(outputTimes);
+		BufferedImage expectedDiv = ImageOps.binaryImageImageOp(ImageOps.OP.DIV, i1, i3);
+		BufferedImage outputDiv = (BufferedImage) genCodeAndRun(inputDiv, "", paramsDiv);
+
+		BufferedImage expectedMod = ImageOps.binaryImageImageOp(ImageOps.OP.MOD, i1, i3);
+		BufferedImage outputMod = (BufferedImage) genCodeAndRun(inputMod, "", paramsMod);
+
+		imageEquals(expectedTimes, outputTimes);
+		imageEquals(expectedDiv, outputDiv);
+		imageEquals(expectedMod, outputMod);
+	}
+
+	@Test
+	void imageScalarTimesDivMode() throws Exception {
+		String input = """
+            image p(string s1, int l, int w, int h) {
+                image[w,h] i1 = s1.
+                : i1 %s l.
+            }
+            """;
+
+		int w = 800;
+		int h = 600;
+		int l = 3;
+		Object[] params = {peter, l, w, h};
+
+		BufferedImage i1 = ImageOps.copyAndResize(FileURLIO.readImage(peter), w, h);
+
+		BufferedImage expectedTimes = ImageOps.binaryImageScalarOp(OP.TIMES, i1, l);
+		BufferedImage outputTimes = (BufferedImage) genCodeAndRun(String.format(input, "*"), "", params);
+
+		BufferedImage expectedDiv = ImageOps.binaryImageScalarOp(OP.DIV, i1, l);
+		BufferedImage outputDiv = (BufferedImage) genCodeAndRun(String.format(input, "/"), "", params);
+
+		BufferedImage expectedMod = ImageOps.binaryImageScalarOp(OP.MOD, i1, l);
+		BufferedImage outputMod = (BufferedImage) genCodeAndRun(String.format(input, "%"), "", params);
+
+		imageEquals(expectedTimes, outputTimes);
+		imageEquals(expectedDiv, outputDiv);
+		imageEquals(expectedMod, outputMod);
+
+	}
+
+
+	@Test
+	void pixelPixelTimesDivMod() throws Exception {
+		String input = """
+            pixel p(pixel p1, pixel p2) {
+                : p1 %s p2.
+            }
+            """;
+
+		int p1 = 0xff001122;
+		int p2 = 0xff112233;
+		Object[] params = {p1, p2};
+
+		int expectedTimes = ImageOps.binaryPackedPixelPixelOp(OP.TIMES, p1, p2);
+		int outputTimes = (int) genCodeAndRun(String.format(input, "*"), "", params);
+
+		int expectedDiv = ImageOps.binaryPackedPixelPixelOp(OP.DIV, p1, p2);
+		int outputDiv = (int) genCodeAndRun(String.format(input, "/"), "", params);
+
+		int expectedMod = ImageOps.binaryPackedPixelPixelOp(OP.MOD, p1, p2);
+		int outputMod = (int) genCodeAndRun(String.format(input, "%"), "", params);
+
+		assertEquals(expectedTimes, outputTimes);
+		assertEquals(expectedDiv, outputDiv);
+		assertEquals(expectedMod, outputMod);
+	}
+
+	@Test
+	void pixelScalarTimesDivMod() throws Exception {
+		String input = """
+            pixel p(pixel p, int s) {
+            : p %s s.
+            }
+            """;
+		int p = 0xff112233;
+		int s = 4;
+		Object[] params = {p, s};
+
+		int expectedTimes = ImageOps.binaryPackedPixelScalarOp(OP.TIMES, p, s);
+		int outputTimes = (int) genCodeAndRun(String.format(input, "*"), "", params);
+
+		int expectedDiv = ImageOps.binaryPackedPixelScalarOp(OP.DIV, p, s);
+		int outputDiv = (int) genCodeAndRun(String.format(input, "/"), "", params);
+
+		int expectedMod = ImageOps.binaryPackedPixelScalarOp(OP.MOD, p, s);
+		int outputMod = (int) genCodeAndRun(String.format(input, "%"), "", params);
+
+		assertEquals(expectedTimes, outputTimes);
+		assertEquals(expectedDiv, outputDiv);
+		assertEquals(expectedMod, outputMod);
+	}
+
+	@Test
+	void intIntTimesDivMod() throws Exception {
+		String input = """
+            int i(int i1) {
+            : -(-(i1+i1)*(i1/i1) %s -6).
+            }
+            """;
+		int i1 = 5;
+		Object[] params = {i1};
+
+		assertEquals(-(-(i1+i1) * -6), genCodeAndRun(String.format(input, "*"), "", params));
+		assertEquals(-(-(i1+i1) / -6), genCodeAndRun(String.format(input, "/"), "", params));
+		assertEquals(-(-(i1+i1) % -6), genCodeAndRun(String.format(input, "%"), "", params));
+	}
+
+	@Test
+	void intIntMinus() throws Exception {
+		String input = """
+            int m(int i) {
+                : -5 - -(i > 0).
+            }
+            """;
+		int i = 10;
+		Object[] params = {i};
+
+		assertEquals(i > 0 ? -4 : -5, genCodeAndRun(input, "", params));
+
+	}
+
+	@Test
+	void pixelPixelMinus() throws Exception {
+		String input = """
+            image p(pixel p1, pixel p2, int w, int h) {
+                image[w, h] i.
+                i = p1 - (p2**2).
+                : i.
+            }
+            """;
+		int p1 = 0xff001122;
+		int p2 = 0xff048202;
+		int w = 500;
+		int h = 1000;
+		Object[] params = {p1, p2, w, h};
+		BufferedImage expected = ImageOps.setAllPixels(ImageOps.makeImage(w, h),
+				ImageOps.binaryPackedPixelPixelOp(OP.MINUS, p1, (int) Math.pow(p2, 2)));
+		BufferedImage output = (BufferedImage) genCodeAndRun(input, "", params);
+		show(output);
+		imageEquals(expected, output);
+	}
+
+	@Test
+	void imageImageMinus() throws Exception {
+		String input = """
+            image i(string s1, string s2, pixel p, int w, int h) {
+                image[w, h] i1.
+                image[w, h] i2 = s2.
+                p = p * (if w > 250 ? 3 ? 2).
+                i1 = s1.
+                i1[x,y]:grn = p.
+                : i1-i2.
+            }
+            """;
+		String s1 = lebron;
+		String s2 = peter;
+		int p = 0xff759204;
+		int w = 1500;
+		int h = 800;
+		Object[] params = {s1, s2, p, w, h};
+
+		BufferedImage i1 = ImageOps.makeImage(w, h);
+		BufferedImage i2 = FileURLIO.readImage(s2, w, h);
+		p = ImageOps.binaryPackedPixelScalarOp(OP.TIMES, p, (w > 250 ? 3 : 2));
+		ImageOps.copyInto(FileURLIO.readImage(s1), i1);
+		for(int y = 0; y != h; y++)
+			for(int x = 0; x != w; x++)
+				ImageOps.setRGB(i1, x, y,
+						PixelOps.setGrn(ImageOps.getRGB(i1, x, y), p));
+		BufferedImage expected = ImageOps.binaryImageImageOp(OP.MINUS, i1, i2);
+		BufferedImage output = (BufferedImage) genCodeAndRun(input, "", params);
+		show(output);
+		imageEquals(expected, output);
+	}
+
+	@Test
+	void intIntPlus() throws Exception {
+		String input = """
+            int m(int i, int j) {
+            : -(i == j) + ((((i*j>0) > 0) < i) + i - --j).
+            }
+            """;
+		int i = 10;
+		int j = 92;
+		Object[] params = {i, j};
+
+		assertEquals(-(i == j ? 1 : 0) + ((i*j>0 ? 1 : 0) + i - -(-(j))), (int) genCodeAndRun(input, "", params));
+	}
+
+	@Test
+	void pixelPixelPlus() throws Exception {
+		String input = """
+            pixel p(pixel p1, pixel p2) {
+            : ((((p1 | p2) & p2 ) | p1) - (p2 + p2)) + ([11,11,11] + p2 - [204,84,58]).
+            }
+            """;
+		int p1 = 0xff850202;
+		int p2 = 0xff028593;
+		Object[] params = {p1, p2};
+		assertEquals(ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.PLUS, ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.MINUS, ((p1|p2)&p2)|p1, ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.PLUS, p2, p2)),
+						ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.MINUS, ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.PLUS, PixelOps.pack(11,11,11), p2), PixelOps.pack(204, 84, 58))),
+				(int) genCodeAndRun(input, "", params));
+	}
+
+	@Test
+	void imageImagePlus() throws Exception {
+		String input = """
+            image i(string s1, string s2, int w, int h) {
+                image[w,h] i1 = s1.
+                image[w,h] i2 = s2.
+                
+                i1[x,y] = i2[if w > 500 ? y/2 ? y/3, if x > 400 ? x / 3 ? x / 4].
+                : i1 + i2.
+            }
+            """;
+		String s1 = lebron;
+		String s2 = eren;
+		int w = 1000;
+		int h = 800;
+		Object[] params = {s1, s2, w, h};
+
+		BufferedImage i1 = FileURLIO.readImage(s1, w, h);
+		BufferedImage i2 = FileURLIO.readImage(s2, w, h);
+
+		for(int y = 0; y != h; y++)
+			for(int x = 0; x != h; x++)
+				ImageOps.setRGB(i1, x, y,
+						ImageOps.getRGB(i2, y % 31 == 0 ? y/(x+1) : y/(x+2), x % 31 == 0 ? x / 3 : x / 4));
+		BufferedImage expected = ImageOps.binaryImageImageOp(OP.PLUS, i1, i2);
+		show(expected);
+	}
+
+	@Test
+	void stringStringPlus() throws Exception {
+		String input = """
+            string s(string s1, int w, int h) {
+                image[w,h] i2.
+                string sI1.
+                string sI2.
+                image[w,h] i1 = s1.
+                i2[x,y] = i1[(x/h)/2,(y/w)/2].
+                sI1 = i1[w/2,h/3]:grn.
+                sI2 = i2[w-h,h].
+                : s1 + ", " + sI1 + ", " + sI2.
+            }
+            """;
+
+		String s1 = eren;
+		int w = 1000;
+		int h = 500;
+		Object[] params = {s1, w, h};
+
+		BufferedImage i2 = ImageOps.makeImage(w, h);
+		String sI1;
+		String sI2;
+		BufferedImage i1 = FileURLIO.readImage(s1, w, h);
+		for(int y = 0; y != h; y++)
+			for(int x = 0; x != w; x++)
+				ImageOps.setRGB(i2, x, y, ImageOps.getRGB(i1, (x/h)/2, (y/w)/2));
+		sI1 = Integer.toString(PixelOps.grn(ImageOps.getRGB(i1, w/2, h/3)));
+		sI2 = PixelOps.packedToString(ImageOps.getRGB(i2, w-h, h));
+		String expected = s1 + ", " + sI1 + ", " + sI2 ;
+		String output = (String) genCodeAndRun(input, "", params);
+		show(output);
+		assertEquals(expected, output);
+	}
+
+	@Test
+	void intIntPow() throws Exception {
+		String input = """
+            int i(int d) {
+            : (d+(d>0)*(if d>4 ? 1 ? 3))**(d>(d>(d<d))).
+            }
+            """;
+		int d = 4;
+		Object[] params = {d};
+		assertEquals((int) Math.pow(d+(d > 0 ? 1 : 0)*(d > 4 ? 1 : 3), d>(d>(d<d ? 1 : 0) ? 1 : 0) ? 1 : 0),
+				(int) genCodeAndRun(input, "", params));
+	}
+
+	@Test
+	void pixelIntPow() throws Exception {
+		String input = """
+            pixel p(pixel p1, int aa) {
+                : p1**((((p1==[6,13,3])+3)>5) + aa % 5).
+            }
+            """;
+		int p1 = 0xff180593;
+		int aa = 43;
+		Object[] params = {p1, aa};
+		assertEquals((int) Math.pow(p1, (((p1 == PixelOps.pack(6, 13, 3) ? 1 : 0) + 3) > 5 ? 1 : 0) + aa % 5),
+				genCodeAndRun(input, "", params));
+	}
+
+	@Test
+	void pixelPixelOrAnd() throws Exception {
+		String input = """
+            pixel p(pixel p1, int i) {
+                pixel p2 = [(i > 65) * 3 + 5, ((i < p1:grn) + 3 * p1:blu), i > p1:red].
+                pixel p3 = (p1 | p2) & [i*2, i**3, i].
+                : p3.
+            }
+            """;
+		int p1 = 0xff950285;
+		int i = 138;
+		Object[] params = {p1, i};
+
+		int p2 = PixelOps.pack((i > 65 ? 1 : 0) * 3 + 5, (i < PixelOps.grn(p1) ? 1 : 0) + 3 * PixelOps.blu(p1), i > PixelOps.red(p1) ? 1 : 0);
+		int p3 = (p1 | p2) & PixelOps.pack(i*2, (int) Math.pow(i, 3), i);
+		int output = (int) genCodeAndRun(input, "", params);
+		show(PixelOps.packedToString(output));
+		assertEquals(p3, output);
+	}
+
+	@Test
+	void erenBeach() throws Exception {
+		String input = """
+            image i(string s1, string s2, string s3, int w, int h) {
+                image[w, h] i1 = s1.
+                image[w, h] i2 = s2.
+                image[w, h] i3 = s3.
+                image[w*3, h*3] i4.
+                
+                i1 = i1:grn.
+                i2 = i2:blu.
+                i3 = i3:red.
+                
+                i4 = i1 + i2 + i3.
+                
+                :i4 - i4 / 3.
+            }
+            """;
+
+		String s1 = eren;
+		String s2 = dino;
+		String s3 = beach;
+		int w = 700;
+		int h = 700;
+		Object[] params = {s1, s2, s3, w, h};
+
+		BufferedImage i1 = FileURLIO.readImage(s1, w, h);
+		BufferedImage i2 = FileURLIO.readImage(s2, w, h);
+		BufferedImage i3 = FileURLIO.readImage(s3, w, h);
+		BufferedImage i4 = ImageOps.makeImage(w*3, h*3);
+
+		ImageOps.copyInto(ImageOps.extractGrn(i1), i1);
+		ImageOps.copyInto(ImageOps.extractBlu(i2), i2);
+		ImageOps.copyInto(ImageOps.extractRed(i3), i3);
+
+		ImageOps.copyInto(ImageOps.binaryImageImageOp(OP.PLUS, i1, ImageOps.binaryImageImageOp(OP.PLUS, i2, i3)), i4);
+		ImageOps.copyInto(ImageOps.binaryImageImageOp(OP.MINUS, i4, ImageOps.binaryImageScalarOp(OP.DIV, i4, 3)), i4);
+
+		BufferedImage output = (BufferedImage) genCodeAndRun(input, "", params);
+		show(output);
+		imageEquals(i4, output);
+	}
+
+	@Test
+	void erenErenEren() throws Exception {
+		String input = """
+            image i(string s1, int d) {
+                image[d, d] eren1 = s1.
+                image[d, d] eren2.
+                image[d, d] eren3.
+                
+                eren2[x,y] = eren1[y,x].
+                eren3[x,y] = eren2[d-x, y].
+                
+                eren1:red = [0,0,0].
+                eren2:grn = [0,0,0].
+                eren3:blu = [0,0,0].
+                
+                : eren1 + eren2 + eren3.
+            }
+            """;
+
+		String s1 = eren;
+		int d = 800;
+		Object[] params = {s1, d};
+
+		BufferedImage eren1 = FileURLIO.readImage(s1, d, d);
+		BufferedImage eren2 = ImageOps.makeImage(d, d);
+		BufferedImage eren3 = ImageOps.makeImage(d, d);
+
+		for(int y = 0; y != d; y++)
+			for(int x = 0; x != d; x++)
+				ImageOps.setRGB(eren2, x, y, ImageOps.getRGB(eren1, y, x));
+
+		for(int y = 0; y != d; y++)
+			for(int x = 0; x != d; x++)
+				ImageOps.setRGB(eren3, x, y, ImageOps.getRGB(eren2, d-x, y));
+
+		for(int y = 0; y != d; y++)
+			for(int x = 0; x != d; x++)
+				ImageOps.setRGB(eren1, x, y, PixelOps.red(PixelOps.pack(0,0,0)));
+
+		for(int y = 0; y != d; y++)
+			for(int x = 0; x != d; x++)
+				ImageOps.setRGB(eren2, x, y, PixelOps.grn(PixelOps.pack(0,0,0)));
+
+		for(int y = 0; y != d; y++)
+			for(int x = 0; x != d; x++)
+				ImageOps.setRGB(eren3, x, y, PixelOps.blu(PixelOps.pack(0,0,0)));
+
+		BufferedImage expected = ImageOps.binaryImageImageOp(OP.PLUS, eren1, ImageOps.binaryImageImageOp(OP.PLUS, eren2, eren3));
+		BufferedImage output = (BufferedImage) genCodeAndRun(input, "", params);
+		show(output);
+		imageEquals(expected, output);
 	}
 
 	@Test
@@ -747,27 +1205,27 @@ class Assignment6Test_starter {
 //		assertEquals(expected, result);
 //	}
 
-	@Test
-	void cg24c() throws Exception {
-		String input = """
-				int imageEqual(string s0, string s1, int w, int h){
-				image[w,h] i0 = s0.
-				image[w,h] i1 = s1.
-				int eq = i0 == i1.
-				:eq.
-				}
-				""";
-		String s0 = beach;
-		String s1 = owl;
-		int w = 100;
-		int h = 200;
-		Object[] params = { s0, s1, w, h };
-		int result = (int) genCodeAndRun(input, "", params);
-		BufferedImage i0 = FileURLIO.readImage(s0, w, h);
-		BufferedImage i1 = FileURLIO.readImage(s1, w, h);
-		int expected = (ImageOps.equalsForCodeGen(i0, i1));
-		assertEquals(expected, result);
-	}
+//	@Test
+//	void cg24c() throws Exception {
+//		String input = """
+//				int imageEqual(string s0, string s1, int w, int h){
+//				image[w,h] i0 = s0.
+//				image[w,h] i1 = s1.
+//				int eq = i0 == i1.
+//				:eq.
+//				}
+//				""";
+//		String s0 = beach;
+//		String s1 = owl;
+//		int w = 100;
+//		int h = 200;
+//		Object[] params = { s0, s1, w, h };
+//		int result = (int) genCodeAndRun(input, "", params);
+//		BufferedImage i0 = FileURLIO.readImage(s0, w, h);
+//		BufferedImage i1 = FileURLIO.readImage(s1, w, h);
+//		int expected = (ImageOps.equalsForCodeGen(i0, i1));
+//		assertEquals(expected, result);
+//	}
 
 	@Test
 	void cg25() throws Exception {

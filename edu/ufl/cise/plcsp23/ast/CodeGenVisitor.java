@@ -45,7 +45,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
         if(lv.getType() == Type.PIXEL){
             state.append(statementAssign.getLv().visit(this, checkType)).append(" = ");
-            state.append("PixelOps.pack(").append(statementAssign.getE().visit(this, arg)).append(")");
+            state.append("PixelOps.pack(").append(statementAssign.getE().visit(this, arg)).append(");\n\t\t");
         }
         else if(lv.getType() == Type.IMAGE){
             if(statementAssign.getLv().getPixelSelector() == null && statementAssign.getLv().getColor() == null){//check if image
@@ -55,12 +55,17 @@ public class CodeGenVisitor implements ASTVisitor {
                     state.append(";\n\t\t");
                 }
                 else if(statementAssign.getE().getType() == Type.PIXEL){
-                    imports.append("import edu.ufl.cise.plcsp23.runtime.PixelOps;\n");
+
+                    if(imports.indexOf("import edu.ufl.cise.plcsp23.runtime.PixelOps;") == -1){
+                        imports.append("import edu.ufl.cise.plcsp23.runtime.PixelOps;\n");
+                    }
                     state.append("ImageOps.setAllPixels(").append(statementAssign.getLv().visit(this, arg)).append(",").append("PixelOps.pack(").append(statementAssign.getE().visit(this, arg)).append("))");
                     state.append(";\n\t\t");
                 }
                 else if(statementAssign.getE().getType() == Type.STRING){
-                    imports.append("import edu.ufl.cise.plcsp23.runtime.FileURLIO;\n");
+                    if(imports.indexOf("import edu.ufl.cise.plcsp23.runtime.FileURLIO;") == -1){
+                        imports.append("import edu.ufl.cise.plcsp23.runtime.FileURLIO;\n");
+                    }
                     state.append("ImageOps.copyInto(").append("FileURLIO.readImage(").append(statementAssign.getE().visit(this, arg)).append(")").append(",").append(statementAssign.getLv().visit(this, arg)).append(")");
                     state.append(";\n\t\t");
                 }
@@ -69,7 +74,7 @@ public class CodeGenVisitor implements ASTVisitor {
                 String nameWInst = lv.getIdent().getName().concat("_").concat(instances(lv.getIdent().getName()).toString());
                 state.append("for(int y = 0; y != ").append(nameWInst).append(".getHeight(); y++){\n\t");
                 state.append("\t\tfor(int x = 0; x != ").append(nameWInst).append(".getWidth(); x++){\n\t");
-                state.append("\t\t\tImageOps.setRGB(").append(nameWInst).append(",x,y,").append(statementAssign.getE().visit(this,arg)).append(")");
+                state.append("\t\t\tImageOps.setRGB(").append(nameWInst).append(",x,y,").append(statementAssign.getE().visit(this,checkType)).append(")");
                 state.append(";\n\t\t");
                 state.append("\t\t}\n").append("\t\t\t}\n\t\t");
             }else if(statementAssign.getLv().getPixelSelector() != null && statementAssign.getLv().getColor() != null){
@@ -88,7 +93,8 @@ public class CodeGenVisitor implements ASTVisitor {
             if (statementAssign.getE().firstToken.getKind() == Kind.NUM_LIT && isNameString) {
                 state.append("\"").append(statementAssign.getE().visit(this, arg)).append("\"");
             } else {
-                state.append(statementAssign.getE().visit(this, arg));
+                state.append(statementAssign.getLv().visit(this,arg)).append(" = ");
+                state.append(statementAssign.getE().visit(this, arg)).append(";");
             }
         }
         return state;
@@ -98,23 +104,39 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCException {
         StringBuilder bin = new StringBuilder();
         boolean isEXP = false;
-        Object left = binaryExpr.getLeft().visit(this, arg);
-        Object right = binaryExpr.getRight().visit(this, arg);
+        Object left = binaryExpr.getLeft().visit(this, checkType);
+        Object right = binaryExpr.getRight().visit(this, checkType);
         bin.append("(");
 
         ////need to figure out how to check type of left and right
         //System.out.println(left + " " + right);
         //System.out.println(binaryExpr.getLeft().getType() + " " + binaryExpr.getRight().getType() );
-        /*if((.getType() == Type.IMAGE && r.getType() == Type.IMAGE){
-            bin.append("ImageOps.binaryImageImageOp(").append(binaryExpr.op).append(",").append(left).append(",").append(right).append(")");
+        if((binaryExpr.left.getType() == Type.IMAGE && binaryExpr.right.getType() == Type.IMAGE)){
+            bin.append("ImageOps.binaryImageImageOp(").append("ImageOps.OP.").append(binaryExpr.op).append(",").append(left).append(",").append(right).append("))");
             return bin;
-        }else if(l.getType() == Type.IMAGE && r.getType() == Type.INT){
-            bin.append("ImageOps.binaryImageScalarOp(").append(binaryExpr.op).append(",").append(left).append(",").append(right).append(")");
+        }else if(binaryExpr.left.getType() == Type.IMAGE && binaryExpr.right.getType() == Type.INT){
+            bin.append("ImageOps.binaryImageScalarOp(").append("ImageOps.OP.").append(binaryExpr.op).append(",").append(left).append(",").append(right).append("))");
             return bin;
-        }else if(l.getType() == Type.PIXEL && r.getType() == Type.PIXEL){
-            bin.append("ImageOps.binaryImagePixelOp(").append(binaryExpr.op).append(",").append(left).append(",").append(right).append(")");
+        }else if(binaryExpr.left.getType() == Type.PIXEL && binaryExpr.right.getType() == Type.PIXEL){
+            if(imports.indexOf("import edu.ufl.cise.plcsp23.runtime.ImageOps;") == -1){
+                imports.append("import edu.ufl.cise.plcsp23.runtime.ImageOps;\n");
+            }
+            bin.append("ImageOps.binaryPackedPixelPixelOp(").append("ImageOps.OP.").append(binaryExpr.op).append(",").append(left).append(",").append(right).append(")");
             return bin;
-        }*/
+        }
+        else if(binaryExpr.left.getType() == Type.PIXEL && binaryExpr.right.getType() == Type.INT){
+            System.out.println("Im the problem");
+            System.out.println(binaryExpr.getLeft().toString());
+            System.out.println(binaryExpr.getRight().toString());
+            if(imports.indexOf("import edu.ufl.cise.plcsp23.runtime.ImageOps;") == -1){
+                imports.append("import edu.ufl.cise.plcsp23.runtime.ImageOps;\n");
+            }
+            binaryExpr.getLeft().visit(this,checkType);
+            System.out.println(binaryExpr.getLeft().getType() + "why");
+            bin.append("ImageOps.binaryPackedPixelIntOp(").append("ImageOps.OP.").append(binaryExpr.op).append(",").append(left).append(",").append(right).append(")");
+            return bin;
+        }
+
         if (binaryExpr.op == EXP) {
             isEXP = true;
             imports.append("import java.lang.Math;\n");
@@ -247,8 +269,11 @@ public class CodeGenVisitor implements ASTVisitor {
                 //dec.append("PixelOps.pack(").append(declaration.getInitializer().visit(this, arg)).append(");\n\t\t");
                 if (type != null && (type.getType() == Type.INT || type.getType() == Type.IMAGE)) {
                     dec.append(declaration.getInitializer().visit(this, arg)).append(";\n\t\t");
+
                 } else {
+                    if(!declaration.getInitializer().getClass().equals(BinaryExpr.class))
                     dec.append("PixelOps.pack(").append(declaration.getInitializer().visit(this, arg)).append(");\n\t\t");
+                    else dec.append(declaration.getInitializer().visit(this, arg)).append(");\n\t\t");
                 }
 
             }
@@ -280,6 +305,10 @@ public class CodeGenVisitor implements ASTVisitor {
         Object expr1 = expandedPixelExpr.getGrnExpr().visit(this, arg);
         Object expr2 = expandedPixelExpr.getRedExpr().visit(this, arg);
         expandedPixelExpr.setType(Type.PIXEL);
+        if(imports.indexOf("import edu.ufl.cise.plcsp23.runtime.PixelOps;") == -1){
+            imports.append("import edu.ufl.cise.plcsp23.runtime.PixelOps;\n");
+        }
+        if (arg != null) return "PixelOps.pack(" + expr2 +"," + expr1 +","+ expr + ")";
         return expr2 +"," + expr1 +","+ expr;
     }
 
@@ -360,6 +389,7 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCException {
         //ConsoleIO.write(numLitExpr.getValue());
+        numLitExpr.setType(Type.INT);
         return numLitExpr.getValue();
     }
 
@@ -379,7 +409,7 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitPredeclaredVarExpr(PredeclaredVarExpr predeclaredVarExpr, Object arg) throws PLCException {
         if(predeclaredVarExpr.getKind() == Kind.RES_y || predeclaredVarExpr.getKind() == Kind.RES_Y) return "y";
         if(predeclaredVarExpr.getKind() == Kind.RES_x || predeclaredVarExpr.getKind() == Kind.RES_X) return "x";
-        else return "error for rn in predeclaredVarExpr";
+        else return null;
     }
 
     @Override
@@ -471,13 +501,12 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitUnaryExprPostFix(UnaryExprPostfix unaryExprPostfix, Object arg) throws PLCException {
         StringBuilder unary = new StringBuilder();
-        Object expr = unaryExprPostfix.getPrimary().visit(this, arg);
+        Object expr = unaryExprPostfix.getPrimary().visit(this, checkType);
         if(imports.indexOf("import edu.ufl.cise.plcsp23.runtime.PixelOps;") == -1){
             imports.append("import edu.ufl.cise.plcsp23.runtime.PixelOps;\n");
         }
         if(unaryExprPostfix.getPrimary().getType() == Type.IMAGE){
             if(unaryExprPostfix.getPixel() != null && unaryExprPostfix.getColor() == null){
-                System.out.println(unaryExprPostfix.getPixel());
                 unary.append("ImageOps.getRGB(").append(expr).append(",").append(unaryExprPostfix.getPixel().visit(this, arg)).append(")");
             }else if(unaryExprPostfix.getPixel() != null && unaryExprPostfix.getColor() != null){
                 if(unaryExprPostfix.getColor() == ColorChannel.red){
