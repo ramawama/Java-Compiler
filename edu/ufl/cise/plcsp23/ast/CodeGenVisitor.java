@@ -242,7 +242,9 @@ public class CodeGenVisitor implements ASTVisitor {
                 //checking image with dimension
                 if (declaration.getNameDef().dimension != null) {
                     if (type != null && type.getType() == Type.STRING) {
-                        imports.append("import edu.ufl.cise.plcsp23.runtime.FileURLIO;\n");
+                        if(imports.indexOf("import edu.ufl.cise.plcsp23.runtime.FileURLIO;") == -1){
+                            imports.append("import edu.ufl.cise.plcsp23.runtime.FileURLIO;\n");
+                        }
                         dec.append("FileURLIO.readImage(").append(declaration.getInitializer().visit(this, arg)).append(",").append(declaration.getNameDef().dimension.visit(this, arg)).append(");\n\t\t");
                     } else if (type != null && type.getType() == Type.IMAGE) {
                         dec.append("ImageOps.copyAndResize(").append(declaration.getInitializer().visit(this, arg)).append(",100,200);\n\t\t");
@@ -258,7 +260,9 @@ public class CodeGenVisitor implements ASTVisitor {
                 //image w/o dimension
                 else if (declaration.getNameDef().dimension == null) {
                     if (type != null && type.getType() == Type.STRING) {
-                        imports.append("import edu.ufl.cise.plcsp23.runtime.FileURLIO;\n");
+                        if(imports.indexOf("import edu.ufl.cise.plcsp23.runtime.FileURLIO;") == -1){
+                            imports.append("import edu.ufl.cise.plcsp23.runtime.FileURLIO;\n");
+                        }
                         dec.append("FileURLIO.readImage(").append(declaration.getInitializer().visit(this, arg)).append(");\n\t\t");
                     }
                     if (type != null && type.getType() == Type.IMAGE) {

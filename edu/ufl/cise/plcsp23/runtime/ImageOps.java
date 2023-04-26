@@ -143,8 +143,8 @@ public class ImageOps {
 		case PLUS -> PixelOps.pack(lred + rred, lgrn + rgrn, lblu + rblu);
 		case MINUS -> PixelOps.pack(lred - rred, lgrn - rgrn, lblu - rblu);
 		case TIMES -> PixelOps.pack(lred * rred, lgrn * rgrn, lblu * rblu);
-		case DIV -> PixelOps.pack(lred / rred, lgrn / lgrn, lblu / rblu);
-		case MOD -> PixelOps.pack(lred % rred, lgrn % lgrn, lblu % rblu);
+		case DIV -> PixelOps.pack(lred / rred, lgrn / rgrn, lblu / rblu);
+		case MOD -> PixelOps.pack(lred % rred, lgrn % rgrn, lblu % rblu);
 		default -> throw new IllegalArgumentException("Compiler/runtime error Unexpected value: " + op);
 		};		
 	}
