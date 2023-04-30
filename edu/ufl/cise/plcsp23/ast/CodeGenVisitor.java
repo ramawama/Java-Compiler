@@ -46,11 +46,12 @@ public class CodeGenVisitor implements ASTVisitor {
 
         if(lv.getType() == Type.PIXEL){
             state.append(statementAssign.getLv().visit(this, checkType)).append(" = ");
-            System.out.println(statementAssign.getE().getType());
-            state.append("PixelOps.pack(").append(statementAssign.getE().visit(this, pixelpack));
-            if(pixelpack) state.append(",0,0");
-            state.append(");\n\t\t");
-            pixelpack = false;
+            if(statementAssign.getE().firstToken.getKind() == Kind.LSQUARE){
+                state.append("PixelOps.pack(").append(statementAssign.getE().visit(this, pixelpack)).append(");\n\t\t");;
+            }
+            if(statementAssign.getE().firstToken.getKind() == Kind.IDENT){
+                state.append(statementAssign.getE().visit(this, pixelpack)).append(";\n\t\t");
+            }
         }
         else if(lv.getType() == Type.IMAGE){
             if(statementAssign.getLv().getPixelSelector() == null && statementAssign.getLv().getColor() == null){//check if image
@@ -118,6 +119,7 @@ public class CodeGenVisitor implements ASTVisitor {
                 bin.append("ImageOps.binaryImageImageOp(").append("ImageOps.OP.").append(binaryExpr.op).append(",").append(left).append(",").append(right).append("))");
             return bin;
         }else if(binaryExpr.left.getType() == Type.IMAGE && binaryExpr.right.getType() == Type.INT){
+            System.out.println("whatup");
             if(binaryExpr.op.equals(Kind.PLUS) || binaryExpr.op.equals(Kind.MINUS) || binaryExpr.op.equals(Kind.TIMES) || binaryExpr.op.equals(Kind.DIV) || binaryExpr.op.equals(Kind.MOD))
                 bin.append("ImageOps.binaryImageScalarOp(").append("ImageOps.OP.").append(binaryExpr.op).append(",").append(left).append(",").append(right).append("))");
             return bin;
@@ -274,10 +276,12 @@ public class CodeGenVisitor implements ASTVisitor {
                     } else if (type != null && type.getType() == Type.IMAGE) {
                         dec.append("ImageOps.copyAndResize(").append(declaration.getInitializer().visit(this, arg)).append(",100,200);\n\t\t");
                     } else if (type != null && type.getType() == Type.PIXEL) {
-                        dec.append("ImageOps.makeImage(").append(declaration.getNameDef().dimension.visit(this, arg)).append(");\n\t\t");
-                        dec.append("ImageOps.setAllPixels(").append(name.getIdent().visit(this, arg)).append(",").append(declaration.getInitializer().visit(this, arg)).append(");\n\t\t");
+                        //dec.append("ImageOps.makeImage(").append(declaration.getNameDef().dimension.visit(this, arg)).append(");\n\t\t");
+                        dec.append("ImageOps.setAllPixels(").append("ImageOps.makeImage(").append(declaration.getNameDef().dimension.visit(this, arg)).append("),").append(declaration.getInitializer().visit(this, arg)).append(");\n\t\t");//.append(name.getIdent().visit(this, arg))
                     }else {
-                        imports.append("import edu.ufl.cise.plcsp23.runtime.PixelOps;\n");
+                        if(imports.indexOf("import edu.ufl.cise.plcsp23.runtime.PixelOps;") == -1){
+                            imports.append("import edu.ufl.cise.plcsp23.runtime.PixelOps;\n");
+                        }
                         dec.append("ImageOps.makeImage(").append(declaration.getNameDef().dimension.visit(this, arg)).append(");\n\t\t");
                         dec.append("ImageOps.setAllPixels(").append(name.getIdent().visit(this, arg)).append(",").append("PixelOps.pack(").append(declaration.getInitializer().visit(this, arg)).append("));\n\t\t");
                     }
@@ -290,15 +294,16 @@ public class CodeGenVisitor implements ASTVisitor {
                         }
                         dec.append("FileURLIO.readImage(").append(declaration.getInitializer().visit(this, arg)).append(");\n\t\t");
                     }
-                    if (type != null && type.getType() == Type.IMAGE) {
+                    if (type != null && type.getType() == Type.IMAGE ) {
                         if(imports.indexOf("import edu.ufl.cise.plcsp23.runtime.ImageOps;") == -1){
                             imports.append("import edu.ufl.cise.plcsp23.runtime.ImageOps;\n");
                         }
                         dec.append("ImageOps.cloneImage(").append(declaration.getInitializer().visit(this, arg)).append(");\n\t\t");
+                    }else if (type == null){ //is binary expr
+                        dec.append(declaration.getInitializer().visit(this, arg)).append(";\n\t\t");
                     }
                 }
             }else if(declaration.getNameDef().getType() == Type.PIXEL){
-                //dec.append("PixelOps.pack(").append(declaration.getInitializer().visit(this, arg)).append(");\n\t\t");
                 if (type != null && (type.getType() == Type.INT || type.getType() == Type.IMAGE)) {
                     dec.append(declaration.getInitializer().visit(this, arg)).append(";\n\t\t");
 
@@ -532,7 +537,7 @@ public class CodeGenVisitor implements ASTVisitor {
         }
         unaryE.append(unaryExpr.e.visit(this,checkType));
         if(unaryExpr.op.equals(Kind.BANG)){
-            unaryE.append("== ? 1 : 0");
+            unaryE.append("== 0 ? 1 : 0");
         }
 
         return unaryE;
