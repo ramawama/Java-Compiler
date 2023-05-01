@@ -124,7 +124,6 @@ public class CodeGenVisitor implements ASTVisitor {
                 bin.append("ImageOps.binaryImageImageOp(").append("ImageOps.OP.").append(binaryExpr.op).append(",").append(left).append(",").append(right).append("))");
             return bin;
         }else if(binaryExpr.left.getType() == Type.IMAGE && binaryExpr.right.getType() == Type.INT){
-            System.out.println("whatup");
             if(binaryExpr.op.equals(Kind.PLUS) || binaryExpr.op.equals(Kind.MINUS) || binaryExpr.op.equals(Kind.TIMES) || binaryExpr.op.equals(Kind.DIV) || binaryExpr.op.equals(Kind.MOD))
                 bin.append("ImageOps.binaryImageScalarOp(").append("ImageOps.OP.").append(binaryExpr.op).append(",").append(left).append(",").append(right).append("))");
             return bin;
@@ -603,6 +602,7 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitWriteStatement(WriteStatement statementWrite, Object arg) throws PLCException {
         StringBuilder write = new StringBuilder();
+        statementWrite.getE().visit(this, checkType);
         if(statementWrite.getE().getType() == Type.PIXEL){
             write.append("ConsoleIO.writePixel("); //dont know if this works
         }else{
