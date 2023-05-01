@@ -79,7 +79,12 @@ public class CodeGenVisitor implements ASTVisitor {
                 String nameWInst = lv.getIdent().getName().concat("_").concat(instances(lv.getIdent().getName()).toString());
                 state.append("for(int y = 0; y != ").append(nameWInst).append(".getHeight(); y++){\n\t");
                 state.append("\t\tfor(int x = 0; x != ").append(nameWInst).append(".getWidth(); x++){\n\t");
-                state.append("\t\t\tImageOps.setRGB(").append(nameWInst).append(",x,y,").append(statementAssign.getE().visit(this,checkType)).append(")");
+                state.append("\t\t\tImageOps.setRGB(").append(nameWInst).append(",");
+                /**
+                need if statement to check if x y are diff
+                 */
+                String pixels = (String) statementAssign.getLv().getPixelSelector().visit(this,checkType);
+                state.append(pixels).append(",").append(statementAssign.getE().visit(this,checkType)).append(")");
                 state.append(";\n\t\t");
                 state.append("\t\t}\n").append("\t\t\t}\n\t\t");
             }else if(statementAssign.getLv().getPixelSelector() != null && statementAssign.getLv().getColor() != null){
