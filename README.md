@@ -1,1 +1,1 @@
-# COP4020-Assignment-1-Lexical-Analysis
+# Class Project
